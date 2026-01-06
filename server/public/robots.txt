@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /signup
+Disallow: /claim-status
+Disallow: /claims/
+Disallow: /admin/
+
+Sitemap: https://www.skyrightlegal.com/sitemap.xml
