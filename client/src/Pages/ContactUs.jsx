@@ -43,7 +43,7 @@ const ContactUs = () => {
                 </span>
                 <div>
                   <p className="font-semibold">Email</p>
-                  <p className="text-sm text-gray-600">support@skyright.com</p>
+                  <p className="text-sm text-gray-600">service@skyrightlegal.com</p>
                 </div>
               </div>
 
@@ -53,7 +53,7 @@ const ContactUs = () => {
                 </span>
                 <div>
                   <p className="font-semibold">Phone</p>
-                  <p className="text-sm text-gray-600">+44 20 0000 0000</p>
+                  <p className="text-sm text-gray-600">+44 7683089774</p>
                 </div>
               </div>
 
@@ -64,7 +64,11 @@ const ContactUs = () => {
                 <div>
                   <p className="font-semibold">Office</p>
                   <p className="text-sm text-gray-600">
-                    London, United Kingdom
+                  71-75 Shelton Street
+                  Covent Garden
+                  London
+                  WC2H 9JQ
+                  UNITED KINGDOM
                   </p>
                 </div>
               </div>

@@ -76,41 +76,41 @@ const Login = () => {
   
 
   /* ================= FACEBOOK LOGIN ================= */
-  const handleFacebookLogin = () => {
-    window.FB.login(
-      async (response) => {
-        if (!response.authResponse) return;
+  // const handleFacebookLogin = () => {
+  //   window.FB.login(
+  //     async (response) => {
+  //       if (!response.authResponse) return;
 
-        window.FB.api(
-          "/me",
-          { fields: "name,email,picture" },
-          async (user) => {
-            const res = await fetch(
-              "http://localhost:8080/api/v1/auth/facebook",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  name: user.name,
-                  email: user.email,
-                  photoUrl: user.picture.data.url,
-                  facebookId: user.id,
-                }),
-              }
-            );
+  //       window.FB.api(
+  //         "/me",
+  //         { fields: "name,email,picture" },
+  //         async (user) => {
+  //           const res = await fetch(
+  //             "http://localhost:8080/api/v1/auth/facebook",
+  //             {
+  //               method: "POST",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify({
+  //                 name: user.name,
+  //                 email: user.email,
+  //                 photoUrl: user.picture.data.url,
+  //                 facebookId: user.id,
+  //               }),
+  //             }
+  //           );
 
-            const data = await res.json();
+  //           const data = await res.json();
 
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
-            window.dispatchEvent(new Event("auth-change"));
-            navigate("/check-compensation");
-          }
-        );
-      },
-      { scope: "email" }
-    );
-  };
+  //           localStorage.setItem("token", data.token);
+  //           localStorage.setItem("user", JSON.stringify(data.user));
+  //           window.dispatchEvent(new Event("auth-change"));
+  //           navigate("/check-compensation");
+  //         }
+  //       );
+  //     },
+  //     { scope: "email" }
+  //   );
+  // };
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white px-6">

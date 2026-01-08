@@ -46,6 +46,16 @@ const Footer = () => {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link to="/terms-and-conditions" className="hover:text-orange-500 transition">
+                  Terms & conditions
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="hover:text-orange-500 transition">
+                  Privacy policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -56,17 +66,23 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3 text-sm text-gray-600">
               <li className="hover:text-orange-500 transition cursor-pointer">
+                <Link to="/flight-delay">
                 Flight Delay
+                </Link>
               </li>
               <li className="hover:text-orange-500 transition cursor-pointer">
+                <Link to="/flight-cancellation">
                 Flight Cancellation
+                </Link>
               </li>
               <li className="hover:text-orange-500 transition cursor-pointer">
+                <Link to="/denied-boarding">
                 Denied Boarding
+                </Link>
               </li>
-              <li className="hover:text-orange-500 transition cursor-pointer">
+              {/* <li className="hover:text-orange-500 transition cursor-pointer">
                 Missed Connection
-              </li>
+              </li> */}
             </ul>
           </div>
 

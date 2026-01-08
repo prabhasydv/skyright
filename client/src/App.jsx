@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router-dom";
 import "./App.css";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
@@ -25,6 +25,11 @@ import AboutUs from "./Pages/AboutUs";
 import ContactUs from "./Pages/ContactUs";
 import TermsAndConditions from "./Pages/TermsAndConditions";
 import KnowYourRights from "./Pages/KnowYourRights";
+import PrivacyPolicy from "./Pages/PrivacyPolicy";
+import WhatsAppButton from "./Pages/WhatsAppButton";
+import FlightDelay from "./Pages/Flight-delay";
+import FlightCancellation from "./Pages/FlightCancellation";
+import DeniedBoarding from "./Pages/DeniedBoarding";
 
 const MainLayout = () => {
   return (
@@ -36,6 +41,7 @@ const MainLayout = () => {
       </div>
       {/* Footer */}
       <Footer />
+      <WhatsAppButton/>
     </div>
   );
 };
@@ -189,6 +195,47 @@ const appRouter = createBrowserRouter([
           </>
         ),
       },
+      {
+        path: "privacy-policy",
+        element: (
+          <>
+            <ScrollToTop/>
+            <PrivacyPolicy/>
+          </>
+        ),
+      },
+      {
+        path: "flight-delay",
+        element: (
+          <>
+            <ScrollToTop/>
+            <FlightDelay/>
+          </>
+        ),
+      },
+      {
+        path: "denied-boarding",
+        element: (
+          <>
+            <ScrollToTop/>
+            <DeniedBoarding/>
+          </>
+        ),
+      },
+      {
+        path: "flight-cancellation",
+        element: (
+          <>
+            <ScrollToTop/>
+            <FlightCancellation/>
+          </>
+        ),
+      },
+      // ✅ CATCH-ALL REDIRECT (ADD THIS LAST)
+  {
+    path: "*",
+    element:(<> <Navigate to="/" replace /> </>)
+  }
     ],
   },
 ]);

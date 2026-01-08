@@ -6,6 +6,12 @@ import { useLocation } from "react-router-dom";
 import airlines from "../assets/airlines.json";
 import logo2 from "../assets/logo2.png"
 import { API_BASE_URL } from "../Auth/config";
+// import 'react-phone-number-input/style.css'
+// import PhoneInput from 'react-phone-number-input'
+import { allCountries } from 'country-telephone-data'
+import CountryCodeSelect from "../Components/CountrySelect";
+import SignatureBox from "../Components/SignatureBox";
+
 
 
 const steps = [
@@ -69,6 +75,7 @@ export default function Compensation2() {
     eSignName: "",
     passengers: [""],
     pnr: "", // ✅ OPTIONAL PNR
+    countryCode: "+44",
 
     // ✅ NEW OPTIONAL CONTACT INFO
     email: "",
@@ -164,6 +171,9 @@ export default function Compensation2() {
     setFormData((p) => ({ ...p, segments }));
   }, [formData.departure, formData.destination, formData.connections]);
 
+
+
+
   /* ---------- VALIDATIONS (UNCHANGED) ---------- */
   const isStep0Valid = () => {
     if (!formData.departure || !formData.destination) return false;
@@ -229,13 +239,26 @@ export default function Compensation2() {
     setIsSubmitting(true); // 🔥 START LOADING
 
     const fd = new FormData();
+    // fd.append(
+    //   "claim",
+    //   JSON.stringify({
+    //     ...formData,
+    //     eSignatures,
+    //   })
+    // );
+    const cleanPhone = formData.phone
+      .replace(/\D/g, "")        // numbers only
+      .replace(/^0+/, "");       // remove leading zeros
+
     fd.append(
       "claim",
       JSON.stringify({
         ...formData,
+        phone: `${formData.countryCode}${cleanPhone}`, // ✅ MERGED ONCE
         eSignatures,
       })
     );
+
 
     boardingPasses.forEach((file) => {
       fd.append("boardingPasses", file);
@@ -269,6 +292,19 @@ export default function Compensation2() {
       setIsSubmitting(false);
     }
   };
+
+
+  const countries = allCountries.map(c => ({
+    name: c.name,
+    dialCode: `+${c.dialCode}`,
+    iso2: c.iso2,
+    flag: `https://flagcdn.com/w20/${c.iso2}.png`
+  }))
+
+  const filteredCountries = countries.filter(
+    (c) => c.iso2 !== "in"
+  )
+
 
 
 
@@ -685,8 +721,8 @@ export default function Compensation2() {
                   <div className="flex gap-4">
                     <button
                       className={`px-6 py-3 rounded-full border ${formData.additional === "With others"
-                          ? "bg-orange-500 text-white"
-                          : ""
+                        ? "bg-orange-500 text-white"
+                        : ""
                         }`}
                       onClick={() =>
                         setFormData({
@@ -751,63 +787,84 @@ export default function Compensation2() {
                   </div>
 
                   {/* CONTACT DETAILS */}
-                  <div className="mt-12 border-t pt-10 space-y-6">
+                  <div className="mt-14 border-t border-gray-200 pt-10 space-y-8">
                     <h3 className="text-xl font-semibold text-gray-900">
                       Contact details
                     </h3>
 
-                    {/* EMAIL (OPTIONAL) */}
-                    <input
-                      type="email"
-                      placeholder="Email address (optional)"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
-                    />
-
-                    {/* PHONE (REQUIRED) */}
-                    <div className="flex gap-3">
-                      <select
-                        value={formData.countryCode}
-                        onChange={(e) =>
-                          setFormData({ ...formData, countryCode: e.target.value })
-                        }
-                        className="px-4 py-4 rounded-full border bg-white focus:ring-2 focus:ring-orange-500"
-                      >
-                        <option value="+1">🇺🇸 +1</option>
-                        <option value="+44">🇬🇧 +44</option>
-                        <option value="+91">🇮🇳 +91</option>
-                        <option value="+49">🇩🇪 +49</option>
-                        <option value="+33">🇫🇷 +33</option>
-                        <option value="+34">🇪🇸 +34</option>
-                      </select>
-
+                    {/* EMAIL */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Email address <span className="text-gray-400">(optional)</span>
+                      </label>
                       <input
-                        type="tel"
-                        required
-                        placeholder="Phone number *"
-                        value={formData.phone}
+                        type="email"
+                        value={formData.email}
                         onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
+                          setFormData({ ...formData, email: e.target.value })
                         }
-                        className="flex-1 px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
+                        placeholder="you@example.com"
+                        className="w-full px-6 py-4 rounded-2xl border border-gray-300
+                 focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                 transition shadow-sm"
                       />
                     </div>
 
-                    {/* ADDRESS (REQUIRED) */}
-                    <textarea
-                      rows={3}
-                      required
-                      placeholder="Address (street, city, country) *"
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
-                      }
-                      className="w-full px-6 py-4 rounded-2xl border focus:ring-2 focus:ring-orange-500"
-                    />
+                    {/* PHONE */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Phone number <span className="text-red-500">*</span>
+                      </label>
+
+                      <div className="flex gap-3">
+                        <CountryCodeSelect
+                          value={formData.countryCode}
+                          onChange={(code) =>
+                            setFormData({ ...formData, countryCode: code })
+                          }
+                          countries={filteredCountries}
+                        />
+
+
+
+                        <input
+                          type="tel"
+                          required
+                          placeholder="Phone number"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              phone: e.target.value.replace(/^\+\d+/, ""), // ❌ remove any code if pasted
+                            })
+                          }
+                          className="flex-1 px-6 py-4 rounded-2xl border border-gray-300
+                   focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                   transition shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ADDRESS */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Address <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        required
+                        placeholder="Street, city, country"
+                        value={formData.address}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
+                        className="w-full px-6 py-4 rounded-2xl border border-gray-300
+                 focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                 transition shadow-sm resize-none"
+                      />
+                    </div>
                   </div>
+
                 </div>
               )}
 
@@ -846,27 +903,27 @@ export default function Compensation2() {
                         </p>
 
                         <p>
-                        By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal co to act on their behalf in pursuing any monetary claim for compensation and assistance under the retained EU Regulation (EC) No 261/2004 as incorporated into UK law by the European Union (Withdrawal) Act 2018 (commonly referred to as UK261), the Air Passenger Rights and Air Travel Organisers’ Licensing (Amendment) (EU Exit) Regulations 2019, or under any other applicable UK or international regulation (including the Montreal Convention where relevant), in respect of denied boarding, cancellation, long delay of the above-specified flight, including all related amounts such as taxes, compensation for disrupted travel, or any monetary compensation for lost, delayed or damaged baggage (“Claim”).
+                          By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal co to act on their behalf in pursuing any monetary claim for compensation and assistance under the retained EU Regulation (EC) No 261/2004 as incorporated into UK law by the European Union (Withdrawal) Act 2018 (commonly referred to as UK261), the Air Passenger Rights and Air Travel Organisers’ Licensing (Amendment) (EU Exit) Regulations 2019, or under any other applicable UK or international regulation (including the Montreal Convention where relevant), in respect of denied boarding, cancellation, long delay of the above-specified flight, including all related amounts such as taxes, compensation for disrupted travel, or any monetary compensation for lost, delayed or damaged baggage (“Claim”).
                         </p>
 
                         <p>
-                        The Client grants SkyRight Legal co irrevocable authority to:<br/>
+                          The Client grants SkyRight Legal co irrevocable authority to:<br />
 
-Communicate with the operating air carrier, any relevant authorities, and third parties on all matters relating to the Claim;
-Institute legal proceedings in the Client’s name if necessary;
-Organise and finance legal representation before courts, alternative dispute resolution bodies, and institutions;   Collect and receive any payments relating to the Claim on the Client’s behalf;
-Deduct fees as agreed per claim and remit the remaining balance to the Client in accordance with the Terms & Conditions.
+                          Communicate with the operating air carrier, any relevant authorities, and third parties on all matters relating to the Claim;
+                          Institute legal proceedings in the Client’s name if necessary;
+                          Organise and finance legal representation before courts, alternative dispute resolution bodies, and institutions;   Collect and receive any payments relating to the Claim on the Client’s behalf;
+                          Deduct fees as agreed per claim and remit the remaining balance to the Client in accordance with the Terms & Conditions.
 
                         </p>
 
                         <p>
-                        The Client understands that by signing this Form, they should not engage in direct contact with the air carrier regarding the Claim or accept any direct payment or vouchers from the airline, as this may affect the pursuit or value of the Claim.
-If full assignment of the Claim is not permissible or effective under applicable law, this Form shall be treated as a Power of Attorney and contract for services, whereby SkyRight Legal co is authorised to administer and pursue the Claim on the Client’s behalf as described above on a “no win, no fee” basis.
+                          The Client understands that by signing this Form, they should not engage in direct contact with the air carrier regarding the Claim or accept any direct payment or vouchers from the airline, as this may affect the pursuit or value of the Claim.
+                          If full assignment of the Claim is not permissible or effective under applicable law, this Form shall be treated as a Power of Attorney and contract for services, whereby SkyRight Legal co is authorised to administer and pursue the Claim on the Client’s behalf as described above on a “no win, no fee” basis.
                         </p>
 
                         <p>
-                        This authorisation may be withdrawn by the Client within 14 days of signing by written notice sent to service@skyrightlegal.com. The Client acknowledges that SkyRight Legal co may commence work on the Claim immediately upon receipt of this signed Form, which may limit or end the right of withdrawal if the Claim is fully resolved within that period.
-The Privacy Policy and General Terms & Conditions available at https://skyrightlegal.com/ apply to this Form and form part of this agreement.
+                          This authorisation may be withdrawn by the Client within 14 days of signing by written notice sent to service@skyrightlegal.com. The Client acknowledges that SkyRight Legal co may commence work on the Claim immediately upon receipt of this signed Form, which may limit or end the right of withdrawal if the Claim is fully resolved within that period.
+                          The Privacy Policy and General Terms & Conditions available at https://skyrightlegal.com/ apply to this Form and form part of this agreement.
 
                         </p>
 
@@ -1035,19 +1092,27 @@ The Privacy Policy and General Terms & Conditions available at https://skyrightl
                   </p>
 
                   {/* SIGNATURE CANVAS (HIDDEN AFTER DONE) */}
-                  {showESignCanvas && (
+                  {/* {showESignCanvas && (
                     <div className="border-2 border-dashed rounded-2xl p-6">
-                      <SignatureCanvas
-                        ref={sigRef}
-                        penColor="black"
-                        canvasProps={{
-                          width: 600,
-                          height: 200,
-                          className: "w-full h-52 bg-white rounded-xl",
-                        }}
+                      <SignatureBox
+                        // ref={sigRef}
+                        // penColor="black"
+                        // canvasProps={{
+                        //   width: 600,
+                        //   height: 200,
+                        //   className: "w-full h-52 bg-white rounded-xl",
+                        // }}
                       />
                     </div>
-                  )}
+                  )} */}
+                  {showESignCanvas && (
+  <div className="border-2 border-dashed rounded-2xl p-6">
+    <SignatureBox ref={sigRef} />
+  </div>
+)}
+
+
+
 
                   {/* ACTION BUTTONS */}
                   {showESignCanvas && (
@@ -1084,8 +1149,8 @@ The Privacy Policy and General Terms & Conditions available at https://skyrightl
                     onClick={() => setShowAgreement(true)}
                     disabled={!allPassengersSigned}
                     className={`px-6 py-3 rounded-full font-semibold ${allPassengersSigned
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-300 cursor-not-allowed"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-300 cursor-not-allowed"
                       }`}
                   >
                     Review Agreement
