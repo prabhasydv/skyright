@@ -9,186 +9,204 @@ const PrivacyPolicy = () => {
         </h1>
 
         <p className="text-sm text-gray-500 mb-8">
-          <strong>Effective Date:</strong> 06 January 2026
+          <strong>Effective Date:</strong> 09 January 2026
         </p>
 
         {/* 1. Introduction */}
         <h2 className="text-xl font-semibold mt-8 mb-3">1. Introduction</h2>
         <p className="mb-4">
-          SkyRight Legal (“we”, “us”, “our”) is fully committed to protecting your
-          privacy and ensuring that your personal information is handled safely,
-          transparently, and in compliance with UK law.
+          SkyRight Legal (“we”, “us”, “our”) is committed to protecting your
+          privacy and ensuring your personal data is handled in a safe,
+          transparent, and lawful manner.
         </p>
         <p className="mb-4">
-          This Privacy Policy explains how we collect, use, store, share, and
+          This Privacy Policy explains how we collect, use, share, store, and
           protect your personal data when you:
         </p>
         <ul className="list-disc pl-6 mb-4">
           <li>Visit our website www.skyrightlegal.com (the “Website”)</li>
-          <li>Submit a flight compensation claim</li>
-          <li>Contact us by email, phone, or any other means</li>
+          <li>
+            Submit a flight compensation claim or use our no win no fee services
+          </li>
+          <li>
+            Interact with us via email, phone, forms, or advertising campaigns
+            (including lead ads on platforms such as Google or Facebook)
+          </li>
         </ul>
         <p className="mb-4">
-          SkyRight Legal is a UK-based no win no fee claims management company
-          helping passengers claim compensation for flight delays, cancellations,
-          and denied boarding under UK passenger rights regulations.
+          SkyRight Legal is a UK-based claims management company specialising in
+          recovering compensation for flight delays, cancellations, and denied
+          boarding under UK passenger rights regulations.
         </p>
+
         <p className="mb-4">
-          We are registered in England and Wales with company number 16452205 and
-          our registered office is 71–75 Shelton Street, Covent Garden, London,
-          WC2H 9JQ, United Kingdom.
+          <strong>Data Controller Details:</strong>
+          <br />
+          SkyRight Legal is registered in England and Wales with company number{" "}
+          <strong>16452205</strong>. Registered office: 71–75 Shelton Street,
+          Covent Garden, London, WC2H 9JQ, United Kingdom.
         </p>
+
         <p className="mb-4">
-          We comply with the UK General Data Protection Regulation (UK GDPR) and
-          the Data Protection Act 2018. For questions, contact us at{" "}
+          For any questions, contact our Data Protection Officer at{" "}
           <a
             href="mailto:service@skyrightlegal.com"
             className="text-orange-600 underline"
           >
             service@skyrightlegal.com
           </a>{" "}
-          or +44 7683089774.
+          or +44 7457403599.
         </p>
 
-        {/* 2. Data We Collect */}
+        {/* 2. Types of Data */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          2. What Personal Data We Collect and Why
+          2. Types of Personal Data We Collect
         </h2>
         <ul className="list-disc pl-6 space-y-2 mb-4">
           <li>
-            <strong>Identity and Contact Data:</strong> Name, email, phone,
-            address, date of birth — to verify identity and communicate with you.
+            <strong>Usage Data:</strong> IP address, browser type, operating
+            system, pages visited, referral source, and navigation paths.
           </li>
           <li>
-            <strong>Flight and Claim Data:</strong> Flight details, booking
-            references, boarding passes, correspondence — to assess and pursue
-            your claim.
+            <strong>Lead Ads Data:</strong> Name, email, phone number, and basic
+            flight details submitted via advertising forms.
           </li>
           <li>
-            <strong>Financial Data:</strong> Bank details — to transfer recovered
-            compensation.
+            <strong>Account / Contact Data:</strong> Name, email address, phone
+            number, postal address, and date of birth (for verification).
           </li>
           <li>
-            <strong>Identification Data:</strong> Passport or ID (only if
-            required) — for verification in complex cases.
+            <strong>Service Provision Data:</strong> Flight details, booking
+            reference, passenger names, boarding passes, correspondence, and
+            bank details.
           </li>
           <li>
-            <strong>Technical and Usage Data:</strong> IP address, browser,
-            device, pages visited — to improve website security and performance.
+            <strong>Communication Data:</strong> Emails, calls, messages, and
+            enquiries.
           </li>
           <li>
-            <strong>Communication Data:</strong> Emails, calls, messages — to
-            manage enquiries and records.
+            <strong>Marketing Data:</strong> Newsletter or update preferences
+            (only with consent).
           </li>
         </ul>
+
         <p className="mb-4">
-          If you submit a claim on behalf of others, you confirm that you have
-          their consent. We may also obtain data from airlines, airports, or
-          public sources where necessary.
+          We do not collect sensitive personal data unless strictly necessary for
+          a claim and with your explicit consent.
         </p>
 
         {/* 3. Legal Basis */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          3. Legal Basis for Processing Your Data
+          3. How We Use Your Personal Data (Legal Bases)
         </h2>
         <ul className="list-disc pl-6 mb-4 space-y-2">
-          <li>Performance of a contract</li>
-          <li>Legitimate interests</li>
-          <li>Legal obligations</li>
-          <li>Consent (for marketing communications)</li>
+          <li>
+            <strong>Contract Performance:</strong> To assess, pursue, and manage
+            your compensation claim.
+          </li>
+          <li>
+            <strong>Legitimate Interests:</strong> Website operation, security,
+            fraud prevention, and service improvements.
+          </li>
+          <li>
+            <strong>Consent:</strong> Marketing communications and non-essential
+            cookies.
+          </li>
+          <li>
+            <strong>Legal Obligations:</strong> Compliance with applicable laws
+            and regulations.
+          </li>
         </ul>
 
-        {/* 4. Use of Data */}
+        {/* 4. Sharing */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          4. How We Use Your Personal Data
+          4. Sharing Your Personal Data
         </h2>
         <ul className="list-disc pl-6 mb-4 space-y-2">
-          <li>Processing and managing compensation claims</li>
-          <li>Communicating with airlines, courts, and regulators</li>
-          <li>Negotiating settlements and legal action</li>
-          <li>Transferring compensation</li>
-          <li>Customer support and fraud prevention</li>
-          <li>Legal and regulatory compliance</li>
+          <li>Airlines and their representatives</li>
+          <li>Solicitors and legal partners</li>
+          <li>IT, hosting, payment, and email service providers</li>
+          <li>Professional advisers, regulators, and courts</li>
         </ul>
         <p className="mb-4">
-          We do not use your data for automated decision-making or profiling.
+          We do not sell your data or share it for unrelated marketing purposes.
         </p>
 
-        {/* 5. Sharing */}
+        {/* 5. International Transfers */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          5. Who We Share Your Data With
+          5. International Data Transfers
+        </h2>
+        <p className="mb-4">
+          Data is primarily processed in the UK. Where data is transferred
+          outside the UK/EEA, appropriate safeguards are applied.
+        </p>
+
+        {/* 6. Retention */}
+        <h2 className="text-xl font-semibold mt-8 mb-3">
+          6. Data Retention Periods
         </h2>
         <ul className="list-disc pl-6 mb-4 space-y-2">
-          <li>Airlines and their legal representatives</li>
-          <li>Courts, regulators, and ombudsman services</li>
-          <li>Trusted service providers and solicitors</li>
-          <li>Professional advisors</li>
-        </ul>
-        <p className="mb-4">
-          We never sell your personal data or share it for marketing without your
-          consent.
-        </p>
-
-        {/* 6–12 condensed */}
-        <h2 className="text-xl font-semibold mt-8 mb-3">
-          6. International Transfers
-        </h2>
-        <p className="mb-4">
-          Data is processed mainly in the UK/EEA. Any transfers outside use
-          approved safeguards.
-        </p>
-
-        <h2 className="text-xl font-semibold mt-8 mb-3">
-          7. Data Retention
-        </h2>
-        <ul className="list-disc pl-6 mb-4 space-y-2">
-          <li>Claims data: 6 years</li>
-          <li>Enquiries: 2 years</li>
-          <li>Website analytics: up to 26 months</li>
-          <li>Financial records: 7 years</li>
+          <li>Claims data: up to 6 years after claim closure</li>
+          <li>Website usage data: up to 26 months</li>
+          <li>Correspondence: up to 2 years</li>
+          <li>Marketing data: until consent is withdrawn</li>
         </ul>
 
-        <h2 className="text-xl font-semibold mt-8 mb-3">8. Data Security</h2>
-        <p className="mb-4">
-          We use encryption, secure servers, access controls, and staff training
-          to protect your data.
-        </p>
-
+        {/* 7. Marketing */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          9. Cookies and Tracking
+          7. Marketing Communications
         </h2>
         <p className="mb-4">
-          We use cookies for functionality and analytics. See our Cookie Policy
-          for details.
+          We send marketing communications only with consent or where permitted
+          for existing clients. You may opt out at any time.
         </p>
 
+        {/* 8. Cookies */}
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          10. Your Rights
+          8. Cookies and Tracking Technologies
         </h2>
         <p className="mb-4">
-          You have rights to access, correct, delete, restrict, object, and
-          transfer your data, and to complain to the ICO.
+          We use cookies for essential functionality, analytics, and advertising
+          (where applicable). Full details are available in our Cookie Policy.
+        </p>
+
+        {/* 9. Rights */}
+        <h2 className="text-xl font-semibold mt-8 mb-3">
+          9. Your Rights Under UK GDPR
+        </h2>
+        <p className="mb-4">
+          You have rights to access, rectify, erase, restrict, object to
+          processing, request portability, and lodge complaints with the ICO.
+        </p>
+
+        {/* 10–13 */}
+        <h2 className="text-xl font-semibold mt-8 mb-3">
+          10. Children’s Data
+        </h2>
+        <p className="mb-4">
+          Our services are not intended for children under 16. Any data collected
+          unintentionally will be deleted.
         </p>
 
         <h2 className="text-xl font-semibold mt-8 mb-3">
           11. Policy Updates
         </h2>
         <p className="mb-4">
-          Updates will be posted on our Website. The latest version is always
-          available online.
+          Updates to this policy will be published on our Website.
         </p>
 
         <h2 className="text-xl font-semibold mt-8 mb-3">
-          12. Contact and Complaints
+          12. Complaints
         </h2>
         <p className="mb-6">
-          Email: service@skyrightlegal.com <br />
-          Phone: +44 7683089774 <br />
-          Address: 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, UK
+          You may complain to the Information Commissioner’s Office (ICO) at
+          www.ico.org.uk or call 0303 123 1113.
         </p>
 
         <p className="text-sm text-gray-500">
           © SkyRight Legal – Company No. 16452205
+          <br />
+          71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
         </p>
       </div>
     </section>

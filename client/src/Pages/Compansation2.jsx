@@ -34,6 +34,13 @@ export default function Compensation2() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showESignCanvas, setShowESignCanvas] = useState(true);
+
+  const [showUploads, setShowUploads] = useState(true)
+  const [uploadSuccessIndex, setUploadSuccessIndex] = useState(null)
+  const [uploadSuccessType, setUploadSuccessType] = useState(null)
+  const [uploadSuccess, setUploadSuccess] = useState({})
+
+
   // const [signature, setSignature] = useState(null);
   const [eSignatures, setESignatures] = useState([]);
   const [activePassengerIndex, setActivePassengerIndex] = useState(0);
@@ -90,33 +97,86 @@ export default function Compensation2() {
     eSignatures.length === formData.passengers.length &&
     formData.passengers.length > 0;
 
+  // const saveSignature = () => {
+  //   if (!sigRef.current || sigRef.current.isEmpty()) {
+  //     alert("Please sign before continuing");
+  //     return;
+  //   }
+
+  //   const signatureData = sigRef.current.toDataURL("image/png");
+
+  //   const updated = [...eSignatures];
+  //   updated[activePassengerIndex] = {
+  //     passengerName: formData.passengers[activePassengerIndex],
+  //     signatureData,
+  //   };
+
+  //   setESignatures(updated);
+  //   sigRef.current.clear();
+
+  //   if (activePassengerIndex < formData.passengers.length - 1) {
+  //     setActivePassengerIndex((i) => i + 1);
+  //   } else {
+  //     setShowAgreement(true);
+  //     // ✅ ALL SIGNED
+  //     setShowESignCanvas(false);   // 👈 CLOSE CANVAS
+  //     setShowAgreement(true);     // 👈 OPEN AGREEMENT
+  //   }
+  // };
+
   const saveSignature = () => {
     if (!sigRef.current || sigRef.current.isEmpty()) {
-      alert("Please sign before continuing");
-      return;
+      alert("Please sign before continuing")
+      return
     }
+  
+    const sourceCanvas = sigRef.current.getCanvas()
+  
+    // ✅ fixed export size (important)
+    const EXPORT_WIDTH = 300
+    const EXPORT_HEIGHT = 100
+  
+    const exportCanvas = document.createElement("canvas")
+    exportCanvas.width = EXPORT_WIDTH
+    exportCanvas.height = EXPORT_HEIGHT
+  
+    const ctx = exportCanvas.getContext("2d")
+  
+    // white background (important for PDFs)
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
+  
+    // scale signature properly
+    ctx.drawImage(
+      sourceCanvas,
+      0,
+      0,
+      EXPORT_WIDTH,
+      EXPORT_HEIGHT
+    )
+  
+    const signatureData = exportCanvas.toDataURL("image/png")
 
-    const signatureData = sigRef.current.toDataURL("image/png");
 
-    const updated = [...eSignatures];
+  
+    const updated = [...eSignatures]
     updated[activePassengerIndex] = {
       passengerName: formData.passengers[activePassengerIndex],
       signatureData,
-    };
-
-    setESignatures(updated);
-    sigRef.current.clear();
-
-    if (activePassengerIndex < formData.passengers.length - 1) {
-      setActivePassengerIndex((i) => i + 1);
-    } else {
-      setShowAgreement(true);
-      // ✅ ALL SIGNED
-      setShowESignCanvas(false);   // 👈 CLOSE CANVAS
-      setShowAgreement(true);     // 👈 OPEN AGREEMENT
     }
-  };
+  
+    setESignatures(updated)
+    sigRef.current.clear()
+  
+    if (activePassengerIndex < formData.passengers.length - 1) {
+      setActivePassengerIndex((i) => i + 1)
+    } else {
+      setShowAgreement(true)
+      setShowESignCanvas(false)
+    }
+  }
 
+  
   useEffect(() => {
     setESignatures([]);
     setActivePassengerIndex(0);
@@ -899,15 +959,15 @@ export default function Compensation2() {
                       <div className="space-y-4 text-gray-700 leading-relaxed">
                         <p>
                           <strong>Assignment of Claim</strong><br />
-                          In accordance with the Privacy Policy and General Terms & Conditions provided on the website of SkyRight Legal co, a company registered in England and Wales with company number 16452205, registered address 71-75, Shelton Street, Covent Garden, London, WC2H 9JQ, UNITED KINGDOM (“SkyRight Legal co”), webpage https://skyrightlegal.com/, which the Client confirms having read and accepted,
+                          In accordance with the Privacy Policy and General Terms & Conditions provided on the website of SkyRight Legal, a company registered in England and Wales with company number 16452205, registered address 71-75, Shelton Street, Covent Garden, London, WC2H 9JQ, UNITED KINGDOM (“SkyRight Legal”), webpage https://skyrightlegal.com/, which the Client confirms having read and accepted,
                         </p>
 
                         <p>
-                          By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal co to act on their behalf in pursuing any monetary claim for compensation and assistance under the retained EU Regulation (EC) No 261/2004 as incorporated into UK law by the European Union (Withdrawal) Act 2018 (commonly referred to as UK261), the Air Passenger Rights and Air Travel Organisers’ Licensing (Amendment) (EU Exit) Regulations 2019, or under any other applicable UK or international regulation (including the Montreal Convention where relevant), in respect of denied boarding, cancellation, long delay of the above-specified flight, including all related amounts such as taxes, compensation for disrupted travel, or any monetary compensation for lost, delayed or damaged baggage (“Claim”).
+                          By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal to act on their behalf in pursuing any monetary claim for compensation and assistance under the retained EU Regulation (EC) No 261/2004 as incorporated into UK law by the European Union (Withdrawal) Act 2018 (commonly referred to as UK261), the Air Passenger Rights and Air Travel Organisers’ Licensing (Amendment) (EU Exit) Regulations 2019, or under any other applicable UK or international regulation (including the Montreal Convention where relevant), in respect of denied boarding, cancellation, long delay of the above-specified flight, including all related amounts such as taxes, compensation for disrupted travel, or any monetary compensation for lost, delayed or damaged baggage (“Claim”).
                         </p>
 
                         <p>
-                          The Client grants SkyRight Legal co irrevocable authority to:<br />
+                          The Client grants SkyRight Legal irrevocable authority to:<br />
 
                           Communicate with the operating air carrier, any relevant authorities, and third parties on all matters relating to the Claim;
                           Institute legal proceedings in the Client’s name if necessary;
@@ -918,12 +978,12 @@ export default function Compensation2() {
 
                         <p>
                           The Client understands that by signing this Form, they should not engage in direct contact with the air carrier regarding the Claim or accept any direct payment or vouchers from the airline, as this may affect the pursuit or value of the Claim.
-                          If full assignment of the Claim is not permissible or effective under applicable law, this Form shall be treated as a Power of Attorney and contract for services, whereby SkyRight Legal co is authorised to administer and pursue the Claim on the Client’s behalf as described above on a “no win, no fee” basis.
+                          If full assignment of the Claim is not permissible or effective under applicable law, this Form shall be treated as a Power of Attorney and contract for services, whereby SkyRight Legal is authorised to administer and pursue the Claim on the Client’s behalf as described above on a “no win, no fee” basis.
                         </p>
 
                         <p>
                           This authorisation may be withdrawn by the Client within 14 days of signing by written notice sent to service@skyrightlegal.com. The Client acknowledges that SkyRight Legal co may commence work on the Claim immediately upon receipt of this signed Form, which may limit or end the right of withdrawal if the Claim is fully resolved within that period.
-                          The Privacy Policy and General Terms & Conditions available at https://skyrightlegal.com/ apply to this Form and form part of this agreement.
+                          The Privacy Policy and General Terms & Conditions available at https://skyrightlegal.com/terms-and-conditions apply to this Form and form part of this agreement.
 
                         </p>
 
@@ -1160,7 +1220,7 @@ export default function Compensation2() {
 
 
               {/* ================= STEP 7 ================= */}
-              {step === 6 && !isSubmitting && (
+              {/* {step === 6 && !isSubmitting && (
                 <div className="space-y-10">
                   <h2 className="text-3xl font-bold">Upload documents</h2>
                   <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-3xl p-10 cursor-pointer">
@@ -1181,7 +1241,6 @@ export default function Compensation2() {
 
 
                   </label>
-                  {/* TERMS & CONDITIONS */}
                   <div className="mt-8 bg-orange-50 border border-orange-200 rounded-2xl p-6">
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
@@ -1216,7 +1275,6 @@ export default function Compensation2() {
                             key={index}
                             className="relative border rounded-xl p-2 bg-gray-50"
                           >
-                            {/* Remove button */}
                             <button
                               type="button"
                               onClick={() =>
@@ -1229,7 +1287,6 @@ export default function Compensation2() {
                               ✕
                             </button>
 
-                            {/* Preview */}
                             {isImage ? (
                               <img
                                 src={URL.createObjectURL(file)}
@@ -1250,7 +1307,248 @@ export default function Compensation2() {
                   )}
 
                 </div>
-              )}
+              )} */}
+
+              {/* ================= STEP 6 ================= */}
+              {/* ================= STEP 6 ================= */}
+              {step === 6 && !isSubmitting && (
+  <div className="space-y-12">
+    <h2 className="text-3xl font-bold">Upload documents</h2>
+
+    <p className="text-gray-600">
+      Upload required documents for <strong>each passenger</strong>.
+    </p>
+
+    {/* PASSENGERS */}
+    <div className="space-y-12">
+      {formData.passengers.map((passenger, index) => {
+        const passengerName =
+          typeof passenger === "string"
+            ? passenger
+            : passenger.passengerName || passenger.name || ""
+
+        return (
+          <div
+            key={index}
+            className="border rounded-3xl p-8 space-y-8 bg-gray-50"
+          >
+            {/* PASSENGER HEADER */}
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-lg">
+                {index + 1}
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Passenger</p>
+                <h3 className="text-2xl font-bold">{passengerName}</h3>
+              </div>
+            </div>
+
+            {/* PASSPORT (MANDATORY) */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-gray-800">Passport</p>
+                <span className="text-xs text-red-500 font-medium">
+                  Required
+                </span>
+              </div>
+
+              <label
+                className={`flex flex-col items-center justify-center rounded-2xl p-6 cursor-pointer transition-all
+                  ${
+                    uploadSuccess[index]?.passport
+                      ? "bg-green-50 border-2 border-green-500"
+                      : "border-2 border-dashed hover:border-orange-400"
+                  }`}
+              >
+                {uploadSuccess[index]?.passport ? (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center text-2xl">
+                      ✓
+                    </div>
+                    <p className="mt-3 text-green-700 font-semibold text-sm">
+                      Passport captured
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <FaFileUpload className="text-3xl text-orange-500" />
+                    <span className="mt-3 text-sm text-gray-700">
+                      Upload passport
+                    </span>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  hidden
+                  required
+                  onChange={(e) => {
+                    setBoardingPasses((prev) => [
+                      ...prev,
+                      ...Array.from(e.target.files),
+                    ])
+
+                    setUploadSuccess((prev) => ({
+                      ...prev,
+                      [index]: {
+                        ...prev[index],
+                        passport: true,
+                      },
+                    }))
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* BOARDING PASS */}
+            <div className="space-y-3">
+              <p className="font-semibold text-gray-800">
+                Boarding pass or booking confirmation
+              </p>
+
+              <label
+                className={`flex flex-col items-center justify-center rounded-2xl p-6 cursor-pointer transition-all
+                  ${
+                    uploadSuccess[index]?.boarding
+                      ? "bg-green-50 border-2 border-green-500"
+                      : "border-2 border-dashed hover:border-orange-400"
+                  }`}
+              >
+                {uploadSuccess[index]?.boarding ? (
+                  <>
+                    <div className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center text-2xl">
+                      ✓
+                    </div>
+                    <p className="mt-3 text-green-700 font-semibold text-sm">
+                      Document captured
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <FaFileUpload className="text-3xl text-orange-500" />
+                    <span className="mt-3 text-sm text-gray-700">
+                      Upload boarding pass or confirmation
+                    </span>
+                  </>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  hidden
+                  onChange={(e) => {
+                    setBoardingPasses((prev) => [
+                      ...prev,
+                      ...Array.from(e.target.files),
+                    ])
+
+                    setUploadSuccess((prev) => ({
+                      ...prev,
+                      [index]: {
+                        ...prev[index],
+                        boarding: true,
+                      },
+                    }))
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+
+    {/* SHARED PREVIEW */}
+    {/* SHARED PREVIEW (SMALL & MOBILE-FRIENDLY) */}
+    {boardingPasses.length > 0 && (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Uploaded documents</h3>
+          <span className="text-xs text-gray-500">
+            Shared for all passengers
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {boardingPasses.map((file, index) => {
+            const isImage = file.type.startsWith("image/")
+
+            return (
+              <div
+                key={index}
+                className="relative border rounded-lg p-1.5 bg-white"
+              >
+                {/* REMOVE */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBoardingPasses((prev) =>
+                      prev.filter((_, i) => i !== index)
+                    )
+                    setUploadSuccess({}) // reset states safely
+                  }}
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center shadow"
+                >
+                  ✕
+                </button>
+
+                {isImage ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt="Uploaded document"
+                    className="h-20 sm:h-24 md:h-28 w-full object-contain rounded"
+                  />
+                ) : (
+                  <div className="h-20 sm:h-24 md:h-28 flex flex-col items-center justify-center text-[10px] text-gray-600 px-1">
+                    <FaFileUpload className="text-lg mb-1 text-orange-500" />
+                    <span className="text-center break-all leading-tight">
+                      {file.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )}
+
+    {/* TERMS */}
+    <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6">
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={acceptTerms}
+          onChange={(e) => setAcceptTerms(e.target.checked)}
+          className="mt-1 w-5 h-5 accent-orange-500"
+        />
+
+        <span className="text-sm text-gray-700">
+          I confirm that all information provided is accurate and I agree to the{" "}
+          <a
+            href="/terms-and-conditions"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-orange-600 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Terms & Conditions
+          </a>{" "}
+          and authorize SkyRight to act on my behalf.
+        </span>
+      </label>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
+
+
 
               {isSubmitting && (
                 <div className="flex flex-col items-center justify-center py-24 space-y-6">

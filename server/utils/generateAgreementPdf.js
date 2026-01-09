@@ -273,11 +273,11 @@ export const generateAgreementPDF = async ({
     /* ================= AGREEMENT TEXT ================= */
     doc.font("Helvetica").fontSize(11).text(
       `
-In accordance with the Privacy Policy and General Terms & Conditions provided on the website of SkyRight Legal co, a company registered in England and Wales with company number 16452205, registered address 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, UNITED KINGDOM (“SkyRight Legal co”), webpage https://skyrightlegal.com/, which the Client confirms having read and accepted.
+In accordance with the Privacy Policy and General Terms & Conditions provided on the website of SkyRight Legal, a company registered in England and Wales with company number 16452205, registered address 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ, UNITED KINGDOM (“SkyRight Legal”), webpage https://skyrightlegal.com/, which the Client confirms having read and accepted.
 
-By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal co to act on their behalf in pursuing any monetary claim for compensation and assistance under Regulation (EC) No 261/2004, including claims for delay, cancellation, denied boarding, or any related compensation (“Claim”).
+By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal to act on their behalf in pursuing any monetary claim for compensation and assistance under Regulation (EC) No 261/2004, including claims for delay, cancellation, denied boarding, or any related compensation (“Claim”).
 
-The Client grants SkyRight Legal co irrevocable authority to communicate with airlines, authorities, initiate legal proceedings, collect payments, deduct agreed fees, and remit the remaining balance to the Client.
+The Client grants SkyRight Legal irrevocable authority to communicate with airlines, authorities, initiate legal proceedings, collect payments, deduct agreed fees, and remit the remaining balance to the Client.
 
 If assignment of the Claim is not legally permissible, this Form shall be treated as a Power of Attorney and service agreement on a “no win, no fee” basis.
       `,
