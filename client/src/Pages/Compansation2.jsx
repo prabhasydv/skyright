@@ -902,6 +902,8 @@ export default function Compensation2() {
                    focus:ring-2 focus:ring-orange-500 focus:border-orange-500
                    transition shadow-sm"
                         />
+
+
                       </div>
                     </div>
 
