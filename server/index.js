@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3000;
 app.set("trust proxy", true);
 
 
-app.use(express.json());
+// app.use(express.json());
 app.use(cookieParser());
 
 app.use(
@@ -45,6 +45,8 @@ app.get(["/robots.txt", "/sitemap.xml"], (req, res) => {
 
 app.use("/uploads", express.static("uploads"));
 app.use("/api/v1/claims", claimRoute);
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/admin/claims", adminClaimRoute);
 

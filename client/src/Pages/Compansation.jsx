@@ -2,6 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import AirportSelect from "../Components/AirportSelect";
 import SignatureCanvas from "react-signature-canvas";
 import { FaUserFriends, FaFileUpload } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
+import airlines from "../assets/airlines.json";
+import logo2 from "../assets/logo2.png"
+import { API_BASE_URL } from "../Auth/config";
+// import 'react-phone-number-input/style.css'
+// import PhoneInput from 'react-phone-number-input'
+import { allCountries } from 'country-telephone-data'
+import CountryCodeSelect from "../Components/CountrySelect";
+import SignatureBox from "../Components/SignatureBox";
+
+
 
 const steps = [
   "Eligibility",
@@ -9,19 +20,50 @@ const steps = [
   "Disruption",
   "Reason",
   "Additional",
-  "E‑Signature",
+  "E-Signature",
   "Documents",
   "Done",
 ];
 
-export default function CheckCompensation() {
+export default function Compensation2() {
   const [connectedFlight, setConnectedFlight] = useState(null);
   const [stops, setStops] = useState(null);
   const [connections, setConnections] = useState([]);
   const [step, setStep] = useState(0);
   const [showAgreement, setShowAgreement] = useState(false);
-  const [signature, setSignature] = useState(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showESignCanvas, setShowESignCanvas] = useState(true);
+
+  const [showUploads, setShowUploads] = useState(true)
+  const [uploadSuccessIndex, setUploadSuccessIndex] = useState(null)
+  const [uploadSuccessType, setUploadSuccessType] = useState(null)
+  const [uploadSuccess, setUploadSuccess] = useState({})
+
+
+  // const [signature, setSignature] = useState(null);
+  const [eSignatures, setESignatures] = useState([]);
+  const [activePassengerIndex, setActivePassengerIndex] = useState(0);
+  // const [boardingPasses, setBoardingPasses] = useState([]);
+  const [documents, setDocuments] = useState({});
   const sigRef = useRef(null);
+  const location = useLocation();
+
+  const delayOptionsByType = {
+    Delayed: [
+      { value: "Less than 3 hours", label: "Less than 3 hours" },
+      { value: "Less than 3 hours", label: "More than 3 hours" },
+    ],
+    Cancelled: [
+      { value: "Less than 2 hours", label: "Less than 2 hours" },
+      { value: "More than 2 hours", label: "More than 2 hours" },
+    ],
+    "Denied boarding": [
+      { value: "Less than 2 hour", label: "Less than 2 hours" },
+      { value: "More than 2 hours", label: "More than 2 hours" },
+    ],
+  };
+
 
   const [formData, setFormData] = useState({
     departure: "",
@@ -29,7 +71,7 @@ export default function CheckCompensation() {
     connectedFlight: null,
     stops: null,
     connections: [],
-    segments: [],   // 👈 MUST EXIST
+    segments: [],
     flightDate: "",
     airlineName: "",
     flightNumber: "",
@@ -39,21 +81,135 @@ export default function CheckCompensation() {
     disruptionReason: "",
     additional: "",
     eSignName: "",
-    passengers: [""]
+    passengers: [""],
+    pnr: "", // ✅ OPTIONAL PNR
+    countryCode: "+44",
+
+    // ✅ NEW OPTIONAL CONTACT INFO
+    email: "",
+    phone: "",
+    address: "",
   });
 
   const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+  const allPassengersSigned =
+    eSignatures.length === formData.passengers.length &&
+    formData.passengers.length > 0;
+
+  // const saveSignature = () => {
+  //   if (!sigRef.current || sigRef.current.isEmpty()) {
+  //     alert("Please sign before continuing");
+  //     return;
+  //   }
+
+  //   const signatureData = sigRef.current.toDataURL("image/png");
+
+  //   const updated = [...eSignatures];
+  //   updated[activePassengerIndex] = {
+  //     passengerName: formData.passengers[activePassengerIndex],
+  //     signatureData,
+  //   };
+
+  //   setESignatures(updated);
+  //   sigRef.current.clear();
+
+  //   if (activePassengerIndex < formData.passengers.length - 1) {
+  //     setActivePassengerIndex((i) => i + 1);
+  //   } else {
+  //     setShowAgreement(true);
+  //     // ✅ ALL SIGNED
+  //     setShowESignCanvas(false);   // 👈 CLOSE CANVAS
+  //     setShowAgreement(true);     // 👈 OPEN AGREEMENT
+  //   }
+  // };
+
   const saveSignature = () => {
     if (!sigRef.current || sigRef.current.isEmpty()) {
-      alert("Please sign before continuing");
-      return;
+      alert("Please sign before continuing")
+      return
     }
-    const base64 = sigRef.current.toDataURL("image/png");
-    setSignature(base64);
-    setShowAgreement(true);
-  };
+  
+    const sourceCanvas = sigRef.current.getCanvas()
+  
+    // ✅ fixed export size (important)
+    const EXPORT_WIDTH = 300
+    const EXPORT_HEIGHT = 100
+  
+    const exportCanvas = document.createElement("canvas")
+    exportCanvas.width = EXPORT_WIDTH
+    exportCanvas.height = EXPORT_HEIGHT
+  
+    const ctx = exportCanvas.getContext("2d")
+  
+    // white background (important for PDFs)
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
+  
+    // scale signature properly
+    ctx.drawImage(
+      sourceCanvas,
+      0,
+      0,
+      EXPORT_WIDTH,
+      EXPORT_HEIGHT
+    )
+  
+    const signatureData = exportCanvas.toDataURL("image/png")
+
+
+  
+    const updated = [...eSignatures]
+    updated[activePassengerIndex] = {
+      passengerName: formData.passengers[activePassengerIndex],
+      signatureData,
+    }
+  
+    setESignatures(updated)
+    sigRef.current.clear()
+  
+    if (activePassengerIndex < formData.passengers.length - 1) {
+      setActivePassengerIndex((i) => i + 1)
+    } else {
+      setShowAgreement(true)
+      setShowESignCanvas(false)
+    }
+  }
+
+  
+  useEffect(() => {
+    setESignatures([]);
+    setActivePassengerIndex(0);
+    setShowESignCanvas(true); // ✅ IMPORTANT
+
+  }, [formData.passengers.length]);
+
+  useEffect(() => {
+    if (step < 6) {
+      setAcceptTerms(false);
+    }
+  }, [step]);
+
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [step]);
+
+  const disruptedSegment = formData.segments.find((s) => s.disrupted);
+
+  const fullRoute = [
+    formData.departure?.iata,
+    ...formData.connections.map((c) => c?.iata),
+    formData.destination?.iata,
+  ]
+    .filter(Boolean)
+    .join(" → ");
+
+
 
   useEffect(() => {
     if (!formData.departure || !formData.destination) return;
@@ -70,635 +226,1310 @@ export default function CheckCompensation() {
       flightDate: "",
       airlineName: "",
       flightNumber: "",
-      disrupted: false, // ⭐ EC261-required
+      disrupted: false,
     }));
 
-    setFormData((prev) => ({
-      ...prev,
-      segments,
-    }));
+    setFormData((p) => ({ ...p, segments }));
   }, [formData.departure, formData.destination, formData.connections]);
 
-  // const isStep0Valid = () => {
-  //   // Required always
-  //   if (!formData.departure) return false;
-  //   if (!formData.destination) return false;
-  //   if (!connectedFlight) return false;
-  //   // Required only if connected flight = yes
-  //   if (connectedFlight === "yes") {
-  //     if (!stops) return false;
-  //     if (!connections || connections.length !== stops) return false;
-  //     if (connections.some((c) => !c)) return false;
-  //   }
-  
-  //   return true;
-  // };
-  
+
+
+
+  /* ---------- VALIDATIONS (UNCHANGED) ---------- */
   const isStep0Valid = () => {
-    // Airports are required
-    if (!formData.departure) return false;
-    if (!formData.destination) return false;
-  
-    // Departure and destination must be different
-    if (
-      formData.departure?.iata &&
-      formData.destination?.iata &&
-      formData.departure.iata === formData.destination.iata
-    ) {
-      return false;
-    }
-  
-    // Connected flight selection required
+    if (!formData.departure || !formData.destination) return false;
     if (!connectedFlight) return false;
-  
-    // If connected flight = YES
     if (connectedFlight === "yes") {
-      // Stops required
-      if (!stops || stops < 1) return false;
-  
-      // Connections array must exist and match stop count
-      if (!Array.isArray(connections)) return false;
-      if (connections.length !== stops) return false;
-  
-      // Every stop airport must be selected
+      if (!stops || connections.length !== stops) return false;
       if (connections.some((c) => !c)) return false;
-  
-      // Stops must not duplicate departure or destination
-      const allIatas = [
-        formData.departure?.iata,
-        ...connections.map((c) => c?.iata),
-        formData.destination?.iata,
-      ];
-  
-      const uniqueIatas = new Set(allIatas.filter(Boolean));
-      if (uniqueIatas.size !== allIatas.filter(Boolean).length) {
-        return false;
-      }
     }
-  
-    return true;
-  };
-  const isStep1Valid = () => {
-    if (!Array.isArray(formData.segments) || formData.segments.length === 0)
-      return false;
-  
-    // Each segment must be complete
-    for (const seg of formData.segments) {
-      if (!seg.flightDate) return false;
-      if (!seg.airlineName?.trim()) return false;
-      if (!seg.flightNumber?.trim()) return false;
-    }
-  
-    // Exactly one disrupted flight
-    const disruptedCount = formData.segments.filter(s => s.disrupted).length;
-    if (disruptedCount !== 1) return false;
-  
     return true;
   };
 
-  const isStep2Valid = () => {
-    if (!formData.disruptionType) return false;
-    if (!formData.delayDuration) return false;
-    return true;
+  const isStep1Valid = () => {
+    if (!formData.segments.length) return false;
+    for (const seg of formData.segments) {
+      if (!seg.flightDate || !seg.airlineName || !seg.flightNumber) return false;
+    }
+    return formData.segments.filter((s) => s.disrupted).length === 1;
   };
-  
+
+  const isStep2Valid = () =>
+    !!formData.disruptionType && !!formData.delayDuration;
+
+  // const isStep3Valid = () =>
+  //     !!formData.disruptionReasonKnown && !!formData.disruptionReason;
   const isStep3Valid = () => {
     if (!formData.disruptionReasonKnown) return false;
-    if (!formData.disruptionReason) return false;
+
+    // If airline told the reason, reason is required
+    if (formData.disruptionReasonKnown === "Yes") {
+      return !!formData.disruptionReason;
+    }
+
+    // No / Don't remember → valid without reason
     return true;
   };
-  
-  const isStep4Valid = () => {
-    // Must choose Alone or With others
-    if (!formData.additional) return false;
-  
-    // At least one passenger name is REQUIRED in all cases
-    if (!Array.isArray(formData.passengers) || formData.passengers.length === 0)
-      return false;
-  
-    // No empty names allowed
-    if (formData.passengers.some(p => !p || !p.trim())) return false;
-  
-    return true;
-  };
-  
-  
-  
-  
 
 
+  const isStep4Valid = () =>
+    !!formData.additional &&
+    formData.passengers.length > 0 &&
+    formData.passengers.every((p) => p.trim()) &&
+    !!formData.phone.trim() &&
+    !!formData.address.trim();
+
+
+    const submitClaim = async () => {
+      console.log("🔥 submitClaim called");
+    
+      if (!acceptTerms) {
+        alert("Please accept the Terms & Conditions");
+        return;
+      }
+    
+      if (Object.keys(documents).length === 0) {
+        alert("Please upload passport and boarding pass");
+        return;
+      }
+    
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please login again");
+        return;
+      }
+    
+      setIsSubmitting(true);
+    
+      const fd = new FormData();
+    
+      const cleanPhone = formData.phone
+        .replace(/\D/g, "")
+        .replace(/^0+/, "");
+    
+      fd.append(
+        "claim",
+        JSON.stringify({
+          ...formData,
+          phone: `${formData.countryCode}${cleanPhone}`,
+          eSignatures,
+        })
+      );
+    
+      // ✅ EXACT files, no duplicates
+      Object.values(documents).forEach((file) => {
+        fd.append("boardingPasses", file);
+      });
+    
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/claims`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: fd,
+        });
+    
+        const data = await res.json();
+    
+        if (!res.ok) {
+          alert(data.message || "Submission failed");
+          setIsSubmitting(false);
+          return;
+        }
+    
+        setIsSubmitting(false);
+        setStep(7);
+      } catch (err) {
+        console.error(err);
+        alert("Network error");
+        setIsSubmitting(false);
+      }
+    };
+    
+
+  const countries = allCountries.map(c => ({
+    name: c.name,
+    dialCode: `+${c.dialCode}`,
+    iso2: c.iso2,
+    flag: `https://flagcdn.com/w20/${c.iso2}.png`
+  }))
+
+  const filteredCountries = countries.filter(
+    (c) => c.iso2 !== "in"
+  )
+
+
+
+
+  useEffect(() => {
+    if (location.state?.departure && location.state?.destination) {
+      setFormData((prev) => ({
+        ...prev,
+        departure: location.state.departure,
+        destination: location.state.destination,
+      }));
+    }
+  }, [location.state]);
+
+
+  /* ---------- UI ---------- */
   return (
-    <section className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 py-24 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white/80 backdrop-blur-xl border border-orange-200 rounded-[36px] shadow-2xl p-8 md:p-12 space-y-14">
-          <div className="text-center">
-            <h1 className="text-4xl font-extrabold text-gray-900">
-              Flight compensation claim ✈️
-            </h1>
-            <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
-              Complete the form step-by-step to check your eligibility and submit your claim.
-            </p>
-          </div>
+    <section className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 py-6 px-4 pt-10">
+      <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden mt-20">
 
-          {/* ================= STEP 1 ================= */}
-          {step === 0 && (
-            <div className="space-y-12">
-              <h2 className="text-3xl font-bold text-gray-900 text-center">
-                Check your eligibility
-              </h2>
+        {/* HEADER */}
+        <div className="px-6 py-4 border-b bg-white">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Flight compensation claim ✈️
+          </h1>
+          <p className="text-sm text-gray-500">
+            Complete the form step by step
+          </p>
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <AirportSelect
-                  label="Departure airport *"
-                  placeholder="Search airport or IATA (DEL)"
-                  onSelect={(val) => setFormData({ ...formData, departure: val })}
-                />
-                <AirportSelect
-                  label="Final destination *"
-                  placeholder="Search airport or IATA (LHR)"
-                  onSelect={(val) => setFormData({ ...formData, destination: val })}
-                />
-              </div>
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-12 min-h-[70vh]">
 
-              <div className="space-y-5">
-                <p className="text-lg font-semibold text-gray-900">
-                  Did you have a connected flight?
-                </p>
-                <div className="grid sm:grid-cols-2 gap-5">
-                  {[
-                    { value: "no", title: "No", desc: "Direct flight" },
-                    { value: "yes", title: "Yes", desc: "Changed planes" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => {
-                        setConnectedFlight(opt.value);
-                        setStops(null);
-                        setConnections([]);
-                        setFormData({ ...formData, connectedFlight: opt.value, stops: null, connections: [] });
-                      }}
-                      className={`p-6 rounded-3xl border text-left transition ${connectedFlight === opt.value
-                        ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl scale-[1.03]"
-                        : "bg-white border-orange-200 hover:bg-orange-50"
-                        }`}
-                    >
-                      <p className="text-lg font-bold">{opt.title}</p>
-                      <p className="text-sm opacity-80">{opt.desc}</p>
-                    </button>
-                  ))}
+          {/* LEFT – STEP SUMMARY */}
+          <aside className="md:col-span-3 bg-gray-50 border-r p-4 hidden md:block">
+            <div className="space-y-2 sticky top-6">
+              {steps.map((label, i) => (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all
+                    ${step === i
+                      ? "bg-orange-100 text-orange-700 font-semibold"
+                      : step > i
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }`}
+                >
+                  <div
+                    className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold
+                      ${step > i
+                        ? "bg-green-500 text-white"
+                        : step === i
+                          ? "bg-orange-500 text-white"
+                          : "bg-gray-200"
+                      }`}
+                  >
+                    {step > i ? "✓" : i + 1}
+                  </div>
+                  <span className="text-sm">{label}</span>
                 </div>
-              </div>
+              ))}
+            </div>
+          </aside>
 
-              {connectedFlight === "yes" && (
-                <div className="space-y-8">
-                  <div>
-                    <p className="font-semibold mb-4">How many stops did you have?</p>
-                    <div className="flex flex-wrap gap-4">
-                      {[1, 2, 3, 4].map((n) => (
+          {/* RIGHT – STEP CONTENT */}
+          <main className="md:col-span-9 p-6 space-y-6 animate-fade ">
+
+            {/* 🔥 YOUR EXISTING STEP JSX GOES HERE 🔥 */}
+            {/* NOTHING REMOVED – ONLY SIZE REDUCED */}
+
+            {/* STEP CONTENT WRAPPER */}
+            <div className="bg-white border rounded-2xl p-5 space-y-6">
+              {/* ================= STEP 1 ================= */}
+              {step === 0 && (
+                <div className="space-y-12">
+                  <h2 className="text-3xl font-bold text-gray-900 text-center">
+                    Check your eligibility
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <AirportSelect
+                      label="Departure airport *"
+                      placeholder="Search airport or IATA (DEL)"
+                      onSelect={(val) => setFormData({ ...formData, departure: val })}
+                    />
+                    <AirportSelect
+                      label="Final destination *"
+                      placeholder="Search airport or IATA (LHR)"
+                      onSelect={(val) => setFormData({ ...formData, destination: val })}
+                    />
+                  </div>
+
+                  {/* OPTIONAL PNR */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Booking reference / PNR (optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ABC123"
+                      value={formData.pnr}
+                      onChange={(e) =>
+                        setFormData({ ...formData, pnr: e.target.value.toUpperCase() })
+                      }
+                      className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Found on your ticket or booking confirmation
+                    </p>
+                  </div>
+
+
+                  <div className="space-y-5">
+                    <p className="text-lg font-semibold text-gray-900">
+                      Did you have a connected flight?
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      {[
+                        { value: "no", title: "No", desc: "Direct flight" },
+                        { value: "yes", title: "Yes", desc: "Changed planes" },
+                      ].map((opt) => (
                         <button
-                          key={n}
+                          key={opt.value}
+                          type="button"
                           onClick={() => {
-                            setStops(n);
-                            setConnections(Array(n).fill(null));
-                            setFormData({ ...formData, stops: n, connections: Array(n).fill(null) });
+                            setConnectedFlight(opt.value);
+                            setStops(null);
+                            setConnections([]);
+                            setFormData({ ...formData, connectedFlight: opt.value, stops: null, connections: [] });
                           }}
-                          className={`px-7 py-3 rounded-full font-semibold border transition ${stops === n ? "bg-orange-500 text-white border-transparent" : "border-orange-300 hover:bg-orange-50"
+                          className={`p-6 rounded-3xl border text-left transition ${connectedFlight === opt.value
+                            ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl scale-[1.03]"
+                            : "bg-white border-orange-200 hover:bg-orange-50"
                             }`}
                         >
-                          {n}
+                          <p className="text-lg font-bold">{opt.title}</p>
+                          <p className="text-sm opacity-80">{opt.desc}</p>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {stops && (
-                    <div className="space-y-6">
-                      {connections.map((_, i) => (
-                        <AirportSelect
-                          key={i}
-                          label={`Stop ${i + 1} airport *`}
-                          placeholder="Search airport"
-                          onSelect={(a) => {
-                            const updated = [...connections];
-                            updated[i] = a;
-                            setConnections(updated);
-                            setFormData({ ...formData, connections: updated });
-                          }}
-                        />
-                      ))}
+                  {connectedFlight === "yes" && (
+                    <div className="space-y-8">
+                      <div>
+                        <p className="font-semibold mb-4">How many stops did you have?</p>
+                        <div className="flex flex-wrap gap-4">
+                          {[1, 2, 3, 4].map((n) => (
+                            <button
+                              key={n}
+                              onClick={() => {
+                                setStops(n);
+                                setConnections(Array(n).fill(null));
+                                setFormData({ ...formData, stops: n, connections: Array(n).fill(null) });
+                              }}
+                              className={`px-7 py-3 rounded-full font-semibold border transition ${stops === n ? "bg-orange-500 text-white border-transparent" : "border-orange-300 hover:bg-orange-50"
+                                }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {stops && (
+                        <div className="space-y-6">
+                          {connections.map((_, i) => (
+                            <AirportSelect
+                              key={i}
+                              label={`Stop ${i + 1} airport *`}
+                              placeholder="Search airport"
+                              onSelect={(a) => {
+                                const updated = [...connections];
+                                updated[i] = a;
+                                setConnections(updated);
+                                setFormData({ ...formData, connections: updated });
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* ================= STEP 2 ================= */}
-          {/* {step === 1 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Flight details</h2>
-              <input
-                className="w-full px-6 py-4 rounded-full border"
-                placeholder="Flight date"
-                onChange={(e) => setFormData({ ...formData, flightDate: e.target.value })}
-              />
-              <input
-                className="w-full px-6 py-4 rounded-full border"
-                placeholder="Airline name"
-                onChange={(e) => setFormData({ ...formData, airlineName: e.target.value })}
-              />
-              <input
-                className="w-full px-6 py-4 rounded-full border"
-                placeholder="Flight number"
-                onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value })}
-              />
-            </div>
-          )} */}
-          {step === 1 && (
-            <div className="space-y-12">
-              <h2 className="text-3xl font-bold">Flight details</h2>
+              {step === 1 && (
+                <div className="space-y-12">
+                  <h2 className="text-3xl font-bold">Flight details</h2>
 
-              {formData.segments.map((seg, index) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-3xl border bg-white space-y-4"
-                >
-                  <p className="font-semibold text-lg">
-                    Flight {index + 1}: {seg.from?.iata} → {seg.to?.iata}
-                  </p>
-
-                  <input
-                    type="date"
-                    className="w-full px-6 py-4 rounded-full border"
-                    placeholder="Flight date"
-                    value={seg.flightDate}
-                    onChange={(e) => {
-                      const updated = [...formData.segments];
-                      updated[index].flightDate = e.target.value;
-                      setFormData({ ...formData, segments: updated });
-                    }}
-                  />
-
-                  <input
-                    className="w-full px-6 py-4 rounded-full border"
-                    placeholder="Airline name"
-                    value={seg.airlineName}
-                    onChange={(e) => {
-                      const updated = [...formData.segments];
-                      updated[index].airlineName = e.target.value;
-                      setFormData({ ...formData, segments: updated });
-                    }}
-                  />
-
-                  <input
-                    className="w-full px-6 py-4 rounded-full border"
-                    placeholder="Flight number"
-                    value={seg.flightNumber}
-                    onChange={(e) => {
-                      const updated = [...formData.segments];
-                      updated[index].flightNumber = e.target.value;
-                      setFormData({ ...formData, segments: updated });
-                    }}
-                  />
-
-                  {/* ⭐ Disrupted flight selector */}
-                  <label className="flex items-center gap-3 mt-3">
-                    <input
-                      type="radio"
-                      name="disruptedFlight"
-                      checked={seg.disrupted}
-                      onChange={() => {
-                        const updated = formData.segments.map((s, i) => ({
-                          ...s,
-                          disrupted: i === index,
-                        }));
-                        setFormData({ ...formData, segments: updated });
-                      }}
-                    />
-                    <span>This flight was disrupted</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-          )}
-
-
-          {/* ================= STEP 3 ================= */}
-          {step === 2 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Disruption details</h2>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                {["Delayed", "Cancelled", "Denied boarding"].map((o) => (
-                  <button
-                    key={o}
-                    onClick={() => setFormData({ ...formData, disruptionType: o })}
-                    className={`py-4 rounded-2xl border hover:bg-orange-50 ${formData.disruptionType === o ? "bg-orange-500 text-white" : ""
-                      }`}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-
-              <select
-                className="w-full px-6 py-4 rounded-full border"
-                onChange={(e) => setFormData({ ...formData, delayDuration: e.target.value })}
-              >
-                <option>Delay duration</option>
-                <option>Less than 3 hours</option>
-                <option>More than 3 hours</option>
-              </select>
-            </div>
-          )}
-
-          {/* ================= STEP 4 ================= */}
-          {step === 3 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Reason for disruption</h2>
-              <select
-                className="w-full px-6 py-4 rounded-full border"
-                onChange={(e) => setFormData({ ...formData, disruptionReasonKnown: e.target.value })}
-              >
-                <option>Did airline tell you the reason?</option>
-                <option>Yes</option>
-                <option>No</option>
-                <option>Don’t remember</option>
-              </select>
-              <select
-                className="w-full px-6 py-4 rounded-full border"
-                onChange={(e) => setFormData({ ...formData, disruptionReason: e.target.value })}
-              >
-                <option>Reason provided</option>
-                <option>Technical issue</option>
-                <option>Weather</option>
-                <option>Staff shortage</option>
-              </select>
-            </div>
-          )}
-
-          {/* ================= STEP 5 ================= */}
-          {/* {step === 4 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Additional details</h2>
-              <div className="flex gap-4">
-                <button
-                  className={`px-6 py-3 rounded-full border ${formData.additional === "With others" ? "bg-orange-500 text-white" : ""}`}
-                  onClick={() => setFormData({ ...formData, additional: "With others" })}
-                >
-                  <FaUserFriends className="inline mr-2" />
-                  With others
-                </button>
-                <button
-                  className={`px-6 py-3 rounded-full border ${formData.additional === "Alone" ? "bg-orange-500 text-white" : ""}`}
-                  onClick={() => setFormData({ ...formData, additional: "Alone" })}
-                >
-                  Alone
-                </button>
-              </div>
-            </div>
-          )} */}
-
-          {step === 4 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Additional details</h2>
-
-              <div className="flex gap-4">
-                <button
-                  className={`px-6 py-3 rounded-full border ${formData.additional === "With others" ? "bg-orange-500 text-white" : ""
-                    }`}
-                  onClick={() => setFormData({ ...formData, additional: "With others", passengers: formData.passengers || [""] })}
-                >
-                  <FaUserFriends className="inline mr-2" />
-                  With others
-                </button>
-                <button
-                  className={`px-6 py-3 rounded-full border ${formData.additional === "Alone" ? "bg-orange-500 text-white" : ""
-                    }`}
-                  onClick={() => setFormData({ ...formData, additional: "Alone", passengers: [""] })}
-                >
-                  Alone
-                </button>
-              </div>
-
-              {/* Passenger Name Inputs */}
-              <div className="mt-6 space-y-4">
-                {formData.passengers?.map((name, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder={`Passenger ${index + 1} Name`}
-                      className="w-full px-6 py-4 rounded-full border"
-                      value={name}
-                      onChange={(e) => {
-                        const updated = [...formData.passengers];
-                        updated[index] = e.target.value;
-                        setFormData({ ...formData, passengers: updated });
-                      }}
-                    />
-                    {/* Show + icon only on the last input */}
-                    {index === formData.passengers.length - 1 && formData.additional === "With others" && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, passengers: [...formData.passengers, ""] })}
-                        className="px-4 py-2 bg-orange-500 text-white rounded-full text-xl"
-                      >
-                        +
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-
-
-          {/* ================= AGREEMENT MODAL ================= */}
-          {showAgreement && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-              <div className="bg-white w-full max-w-4xl rounded-2xl p-8 relative">
-                <button
-                  onClick={() => setShowAgreement(false)}
-                  className="absolute top-4 right-4 text-xl"
-                >
-                  ✕
-                </button>
-
-                <div className="max-h-[70vh] overflow-y-auto relative border p-6 rounded-xl">
-                  <h3 className="text-2xl font-bold mb-4">Agreement</h3>
-                  <p className="text-gray-700 leading-relaxed mb-10">
-                    By signing this agreement, you authorize SkyRight to act on your Lorem ipsum dolor sit amet consectetur adipisicing elit. Id alias unde rem suscipit temporibus ratione facere quidem, dolores saepe nemo a quia autem quod numquam perferendis dolor? Quasi suscipit, eius quod deserunt, ducimus aperiam quae eveniet ex est porro cupiditate vel alias natus, aliquam nihil asperiores in temporibus minima facere? Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed placeat exercitationem obcaecati error voluptates eum, recusandae facere harum libero laudantium rem quam ad eius, enim amet adipisci? Voluptatibus rem laborum assumenda quod ducimus? Repellendus accusantium, at nesciunt aliquid, explicabo hic sequi amet aperiam veniam laboriosam ipsam iure quasi in molestias.
-                  </p>
-                  <p className="text-gray-700 leading-relaxed mb-24">
-                    You confirm that all information is accurate and complete.
-                  </p>
-
-                  {/* USER DATA BOTTOM LEFT */}
-                  <div className="absolute left-6 text-left text-sm max-w-xs ">
-                    <h4 className="font-bold text-gray-900 mb-2">Your Info:</h4>
-                    {/* <p className="text-gray-700">Departure: {formData.departure?.iata || formData.departure?.name || ""}</p>
-                    <p className="text-gray-700">Destination: {formData.destination?.iata || formData.destination?.name || ""}</p>
-                    <p className="text-gray-700">Connected Flight: {formData.connectedFlight}</p>
-                    {formData.stops && <p className="text-gray-700">Stops: {formData.stops}</p>}
-                    {formData.connections.length > 0 && (
-                      <p className="text-gray-700">
-                        Connections: {formData.connections.filter(Boolean).map((c) => c.iata || c.name).join(", ")}
+                  {formData.segments.map((seg, index) => (
+                    <div
+                      key={index}
+                      className="p-6 rounded-3xl border bg-white space-y-4 relative"
+                    >
+                      <p className="font-semibold text-lg">
+                        Flight {index + 1}: {seg.from?.iata} → {seg.to?.iata}
                       </p>
-                    )} */}
-                    {/* <p className="text-gray-700">Name: {formData.passengerName}</p> */}
-                    <p className="text-gray-700">
-                      Name: {formData.passengers?.length > 0
-                        ? formData.passengers.filter(Boolean).join(", ")
-                        : formData.passengerName || ""}
-                    </p>
 
-                    <p className="text-gray-700">Flight Date: {formData.flightDate}</p>
-                    <p className="text-gray-700">Airline: {formData.airlineName}</p>
-                    <p className="text-gray-700">Flight Number: {formData.flightNumber}</p>
-                    {/* <p className="text-gray-700">Disruption: {formData.disruptionType}</p>
-                    <p className="text-gray-700">Delay Duration: {formData.delayDuration}</p>
-                    <p className="text-gray-700">Reason Known: {formData.disruptionReasonKnown}</p>
-                    <p className="text-gray-700">Reason: {formData.disruptionReason}</p>
-                    <p className="text-gray-700">Additional: {formData.additional}</p> */}
-                    {formData.eSignName && <p className="text-gray-700">Signed Name: {formData.eSignName}</p>}
+                      {/* FLIGHT DATE */}
+                      <input
+                        type="date"
+                        className="w-full px-6 py-4 rounded-full border"
+                        value={seg.flightDate}
+                        onChange={(e) => {
+                          const updated = [...formData.segments];
+                          updated[index].flightDate = e.target.value;
+                          setFormData({ ...formData, segments: updated });
+                        }}
+                      />
+
+                      {/* AIRLINE AUTOCOMPLETE WITH LOGO */}
+                      <div className="relative">
+                        <input
+                          className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
+                          placeholder="Search airline (Lufthansa, Emirates…)"
+                          value={seg.airlineName || ""}
+                          onChange={(e) => {
+                            const updated = [...formData.segments];
+                            updated[index].airlineName = e.target.value;
+                            updated[index].showAirlines = true;
+                            setFormData({ ...formData, segments: updated });
+                          }}
+                          onFocus={() => {
+                            const updated = [...formData.segments];
+                            updated[index].showAirlines = true;
+                            setFormData({ ...formData, segments: updated });
+                          }}
+                        />
+
+                        {seg.showAirlines && seg.airlineName?.length > 1 && (
+                          <ul className="absolute z-20 mt-2 w-full bg-white border rounded-2xl shadow-lg max-h-60 overflow-y-auto">
+                            {airlines
+                              .filter((a) =>
+                                a.name
+                                  .toLowerCase()
+                                  .includes(seg.airlineName.toLowerCase())
+                              )
+                              .slice(0, 10)
+                              .map((airline, i) => (
+                                <li
+                                  key={i}
+                                  onClick={() => {
+                                    const updated = [...formData.segments];
+                                    updated[index].airlineName = airline.name;
+                                    updated[index].airlineId = airline.id;
+                                    updated[index].airlineLogo = airline.logo;
+                                    updated[index].showAirlines = false;
+                                    setFormData({ ...formData, segments: updated });
+                                  }}
+                                  className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50 cursor-pointer"
+                                >
+                                  {/* LOGO */}
+                                  <img
+                                    src={airline.logo}
+                                    alt={airline.name}
+                                    className="w-6 h-6 object-contain rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+
+                                  {/* NAME */}
+                                  <span className="text-sm font-medium">
+                                    {airline.name}
+                                  </span>
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* FLIGHT NUMBER */}
+                      <input
+                        className="w-full px-6 py-4 rounded-full border"
+                        placeholder="Flight number (e.g. 123)"
+                        value={seg.flightNumber}
+                        onChange={(e) => {
+                          const updated = [...formData.segments];
+                          updated[index].flightNumber = e.target.value;
+                          setFormData({ ...formData, segments: updated });
+                        }}
+                      />
+
+                      {/* DISRUPTED FLIGHT */}
+                      <label className="flex items-center gap-3 mt-3">
+                        <input
+                          type="radio"
+                          name="disruptedFlight"
+                          checked={seg.disrupted}
+                          onChange={() => {
+                            const updated = formData.segments.map((s, i) => ({
+                              ...s,
+                              disrupted: i === index,
+                            }));
+                            setFormData({ ...formData, segments: updated });
+                          }}
+                        />
+                        <span>This flight was disrupted</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+
+
+
+              {/* ================= STEP 3 ================= */}
+              {step === 2 && (
+                <div className="space-y-10">
+                  <h2 className="text-3xl font-bold">Disruption details</h2>
+
+                  {/* DISRUPTION TYPE */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {["Delayed", "Cancelled", "Denied boarding"].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            disruptionType: type,
+                            delayDuration: "", // reset on change
+                          })
+                        }
+                        className={`py-4 rounded-2xl border font-semibold transition
+            ${formData.disruptionType === type
+                            ? "bg-orange-500 text-white"
+                            : "hover:bg-orange-50"
+                          }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
                   </div>
 
+                  {/* DELAY DURATION (DYNAMIC BY TYPE) */}
+                  {formData.disruptionType && (
+                    <select
+                      key={formData.disruptionType} // 🔑 CRITICAL FIX
+                      required
+                      value={formData.delayDuration}
+                      onChange={(e) =>
+                        setFormData({ ...formData, delayDuration: e.target.value })
+                      }
+                      className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="">Select option</option>
 
-                  {/* SIGNATURE BOTTOM RIGHT */}
-                  {signature && (
-                    <div className="absolute right-6 text-right">
-                      <img src={signature} alt="Signature" className="h-16" />
-                      <p className="text-xs text-gray-500 mt-1">Signed electronically</p>
-                    </div>
+                      {delayOptionsByType[formData.disruptionType].map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+
                   )}
                 </div>
+              )}
 
-                <div className="mt-6 text-right">
-                  <button
-                    onClick={() => setShowAgreement(false)}
-                    className="px-6 py-3 rounded-full bg-black text-white"
+
+              {/* ================= STEP 4 ================= */}
+
+              {step === 3 && (
+                <div className="space-y-10">
+                  <h2 className="text-3xl font-bold">Reason for disruption</h2>
+
+                  {/* DID AIRLINE TELL REASON */}
+                  <select
+                    value={formData.disruptionReasonKnown}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        disruptionReasonKnown: e.target.value,
+                        disruptionReason: "", // reset reason when changed
+                      })
+                    }
+                    className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
                   >
-                    Accept & Close
+                    <option value="">Did airline tell you the reason?</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="Don’t remember">Don’t remember</option>
+                  </select>
+
+                  {/* SHOW ONLY IF YES */}
+                  {formData.disruptionReasonKnown === "Yes" && (
+                    <select
+                      value={formData.disruptionReason}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          disruptionReason: e.target.value,
+                        })
+                      }
+                      className="w-full px-6 py-4 rounded-full border focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value="">Reason provided</option>
+                      <option value="Technical issue">Technical issue</option>
+                      <option value="Weather">Weather</option>
+                      <option value="Staff shortage">Staff shortage</option>
+                      <option value="Air traffic control">Air traffic control</option>
+                    </select>
+                  )}
+                </div>
+              )}
+
+
+              {step === 4 && (
+                <div className="space-y-12">
+                  <h2 className="text-3xl font-bold">Additional details</h2>
+
+                  {/* TRAVEL MODE */}
+                  <div className="flex gap-4">
+                    <button
+                      className={`px-6 py-3 rounded-full border ${formData.additional === "With others"
+                        ? "bg-orange-500 text-white"
+                        : ""
+                        }`}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          additional: "With others",
+                          passengers: formData.passengers || [""],
+                        })
+                      }
+                    >
+                      <FaUserFriends className="inline mr-2" />
+                      With others
+                    </button>
+
+                    <button
+                      className={`px-6 py-3 rounded-full border ${formData.additional === "Alone" ? "bg-orange-500 text-white" : ""
+                        }`}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          additional: "Alone",
+                          passengers: [""],
+                        })
+                      }
+                    >
+                      Alone
+                    </button>
+                  </div>
+
+                  {/* PASSENGERS */}
+                  <div className="space-y-4">
+                    {formData.passengers.map((name, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder={`Passenger ${index + 1} full name`}
+                          className="w-full px-6 py-4 rounded-full border"
+                          value={name}
+                          onChange={(e) => {
+                            const updated = [...formData.passengers];
+                            updated[index] = e.target.value;
+                            setFormData({ ...formData, passengers: updated });
+                          }}
+                        />
+
+                        {index === formData.passengers.length - 1 &&
+                          formData.additional === "With others" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  passengers: [...formData.passengers, ""],
+                                })
+                              }
+                              className="px-4 py-2 bg-orange-500 text-white rounded-full text-xl"
+                            >
+                              +
+                            </button>
+                          )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CONTACT DETAILS */}
+                  <div className="mt-14 border-t border-gray-200 pt-10 space-y-8">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Contact details
+                    </h3>
+
+                    {/* EMAIL */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Email address <span className="text-gray-400">(optional)</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="you@example.com"
+                        className="w-full px-6 py-4 rounded-2xl border border-gray-300
+                 focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                 transition shadow-sm"
+                      />
+                    </div>
+
+                    {/* PHONE */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Phone number <span className="text-red-500">*</span>
+                      </label>
+
+                      <div className="flex gap-3">
+                        <CountryCodeSelect
+                          value={formData.countryCode}
+                          onChange={(code) =>
+                            setFormData({ ...formData, countryCode: code })
+                          }
+                          countries={filteredCountries}
+                        />
+
+
+
+                        <input
+                          type="tel"
+                          required
+                          placeholder="Phone number"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              phone: e.target.value.replace(/^\+\d+/, ""), // ❌ remove any code if pasted
+                            })
+                          }
+                          className="flex-1 px-6 py-4 rounded-2xl border border-gray-300
+                   focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                   transition shadow-sm"
+                        />
+
+
+                      </div>
+                    </div>
+
+                    {/* ADDRESS */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Address <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        required
+                        placeholder="Street, city, country"
+                        value={formData.address}
+                        onChange={(e) =>
+                          setFormData({ ...formData, address: e.target.value })
+                        }
+                        className="w-full px-6 py-4 rounded-2xl border border-gray-300
+                 focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                 transition shadow-sm resize-none"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+
+
+              {/* ================= AGREEMENT MODAL ================= */}
+              {showAgreement && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                  <div className="bg-white w-full max-w-4xl rounded-2xl p-8 relative">
+                    {/* CLOSE BUTTON */}
+                    <button
+                      onClick={() => setShowAgreement(false)}
+                      className="absolute top-4 right-4 text-xl"
+                    >
+                      ✕
+                    </button>
+
+                    {/* AGREEMENT CONTENT */}
+                    <div className="max-h-[70vh] overflow-y-auto border p-8 rounded-xl">
+
+                      {/* TITLE */}
+                      <div className="flex justify-center mb-8">
+                        <img
+                          src={logo2}
+                          alt="SkyRight Logo"
+                          className="h-10 w-auto object-contain"
+                        />
+                      </div>
+
+
+                      {/* AGREEMENT TEXT */}
+                      <div className="space-y-4 text-gray-700 leading-relaxed">
+                        <p>
+                          <strong>Assignment of Claim</strong><br />
+                          In accordance with the Privacy Policy and General Terms & Conditions provided on the website of SkyRight Legal, a company registered in England and Wales with company number 16452205, registered address 71-75, Shelton Street, Covent Garden, London, WC2H 9JQ, UNITED KINGDOM (“SkyRight Legal”), webpage https://skyrightlegal.com/, which the Client confirms having read and accepted,
+                        </p>
+
+                        <p>
+                          By signing this Assignment Form / Power of Attorney (“Form”), the Client authorises SkyRight Legal to act on their behalf in pursuing any monetary claim for compensation and assistance under the retained EU Regulation (EC) No 261/2004 as incorporated into UK law by the European Union (Withdrawal) Act 2018 (commonly referred to as UK261), the Air Passenger Rights and Air Travel Organisers’ Licensing (Amendment) (EU Exit) Regulations 2019, or under any other applicable UK or international regulation (including the Montreal Convention where relevant), in respect of denied boarding, cancellation, long delay of the above-specified flight, including all related amounts such as taxes, compensation for disrupted travel, or any monetary compensation for lost, delayed or damaged baggage (“Claim”).
+                        </p>
+
+                        <p>
+                          The Client grants SkyRight Legal irrevocable authority to:<br />
+
+                          Communicate with the operating air carrier, any relevant authorities, and third parties on all matters relating to the Claim;
+                          Institute legal proceedings in the Client’s name if necessary;
+                          Organise and finance legal representation before courts, alternative dispute resolution bodies, and institutions;   Collect and receive any payments relating to the Claim on the Client’s behalf;
+                          Deduct fees as agreed per claim and remit the remaining balance to the Client in accordance with the Terms & Conditions.
+
+                        </p>
+
+                        <p>
+                          The Client understands that by signing this Form, they should not engage in direct contact with the air carrier regarding the Claim or accept any direct payment or vouchers from the airline, as this may affect the pursuit or value of the Claim.
+                          If full assignment of the Claim is not permissible or effective under applicable law, this Form shall be treated as a Power of Attorney and contract for services, whereby SkyRight Legal is authorised to administer and pursue the Claim on the Client’s behalf as described above on a “no win, no fee” basis.
+                        </p>
+
+                        <p>
+                          This authorisation may be withdrawn by the Client within 14 days of signing by written notice sent to service@skyrightlegal.com. The Client acknowledges that SkyRight Legal co may commence work on the Claim immediately upon receipt of this signed Form, which may limit or end the right of withdrawal if the Claim is fully resolved within that period.
+                          The Privacy Policy and General Terms & Conditions available at https://skyrightlegal.com/terms-and-conditions apply to this Form and form part of this agreement.
+
+                        </p>
+
+                        <p>
+                          <strong>Client Declaration:</strong><br />
+                          I confirm that the information provided is correct and that I am entitled to pursue this Claim.
+                        </p>
+
+                        {/* <p>
+                          By signing this agreement, the Client confirms that all information provided
+                          is accurate and complete and confirms acceptance of the applicable Privacy
+                          Policy and General Terms & Conditions.
+                        </p> */}
+                      </div>
+
+                      {/* SEPARATOR */}
+                      <div className="my-10 border-t" />
+
+                      {/* BOTTOM CONTRACT SECTION */}
+                      <div className="flex justify-between items-end gap-8">
+
+                        {/* LEFT — CLIENT / FLIGHT INFO
+  <div className="text-sm text-gray-700 max-w-xs">
+    <p className="font-semibold text-gray-900 mb-2">
+      Client Information
+    </p>
+    <p>
+      Name:{" "}
+      {formData.passengers?.length > 0
+        ? formData.passengers.filter(Boolean).join(", ")
+        : formData.passengerName || ""}
+    </p>
+    <p>Flight Date: {formData.flightDate}</p>
+    <p>Airline: {formData.airlineName}</p>
+    <p>Flight Number: {formData.flightNumber}</p>
+    {formData.eSignName && (
+      <p>Signed Name: {formData.eSignName}</p>
+    )}
+  </div> */}
+
+                        {/* LEFT — CLIENT / FLIGHT INFO */}
+                        <div className="text-sm text-gray-700 max-w-xs space-y-2">
+                          <p className="font-semibold text-gray-900 mb-2">
+                            Client & Claim Information
+                          </p>
+
+                          {/* PASSENGERS */}
+                          <p>
+                            <b>Passenger(s):</b>{" "}
+                            {formData.passengers?.filter(Boolean).join(", ")}
+                          </p>
+
+                          {/* PNR */}
+                          {formData.pnr && (
+                            <p>
+                              <b>Booking reference (PNR):</b> {formData.pnr}
+                            </p>
+                          )}
+
+                          {/* ROUTE */}
+                          {/* <p>
+    <b>Route:</b> {fullRoute}
+  </p> */}
+
+                          {/* DISRUPTED FLIGHT ONLY */}
+                          {disruptedSegment && (
+                            <>
+                              <p>
+                                <b>Disrupted flight:</b>{" "}
+                                {disruptedSegment.from?.iata} → {disruptedSegment.to?.iata}
+                              </p>
+
+                              <p>
+                                <b>Flight date:</b> {disruptedSegment.flightDate}
+                              </p>
+
+                              <p>
+                                <b>Airline:</b> {disruptedSegment.airlineName}
+                              </p>
+
+                              <p>
+                                <b>Flight number:</b> {disruptedSegment.flightNumber}
+                              </p>
+                            </>
+                          )}
+
+                          {/* DISRUPTION */}
+                          <p>
+                            <b>Disruption type:</b> {formData.disruptionType}
+                          </p>
+
+                          <p>
+                            <b>Delay / impact:</b> {formData.delayDuration}
+                          </p>
+
+                          {/* REASON */}
+                          {/* {formData.disruptionReasonKnown && (
+    <p>
+      <b>Reason known:</b> {formData.disruptionReasonKnown}
+    </p>
+  )} */}
+
+                          {/* {formData.disruptionReason && (
+    <p>
+      <b>Reason provided:</b> {formData.disruptionReason}
+    </p>
+  )} */}
+
+                          {/* TRAVEL MODE */}
+                          {/* <p>
+    <b>Travelled:</b> {formData.additional}
+  </p> */}
+                        </div>
+
+
+                        {/* RIGHT — SIGNATURES */}
+                        {eSignatures.length > 0 && (
+                          <div className="text-right space-y-4">
+                            {eSignatures.map((sig, i) => (
+                              <div key={i}>
+                                <img
+                                  src={sig.signatureData}
+                                  alt={`Signature ${i + 1}`}
+                                  className="h-16 ml-auto"
+                                />
+                                <p className="text-xs text-gray-500">
+                                  e-Signature of {sig.passengerName}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+
+
+
+
+                    {/* FOOTER BUTTON */}
+                    <div className="mt-6 text-right">
+                      <button
+                        onClick={() => setShowAgreement(false)}
+                        className="px-6 py-3 rounded-full bg-black text-white"
+                      >
+                        Accept & Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+              {/* ================= STEP 6 ================= */}
+              {step === 5 && (
+                <div className="space-y-8">
+                  <h2 className="text-3xl font-bold">E-Signature</h2>
+
+                  {/* PASSENGER INFO */}
+                  <p className="text-lg font-semibold">
+                    Passenger {activePassengerIndex + 1} of {formData.passengers.length}
+                  </p>
+
+                  <p className="text-gray-600">
+                    Signing for: <b>{formData.passengers[activePassengerIndex]}</b>
+                  </p>
+
+                  {/* SIGNATURE CANVAS (HIDDEN AFTER DONE) */}
+                  {/* {showESignCanvas && (
+                    <div className="border-2 border-dashed rounded-2xl p-6">
+                      <SignatureBox
+                        // ref={sigRef}
+                        // penColor="black"
+                        // canvasProps={{
+                        //   width: 600,
+                        //   height: 200,
+                        //   className: "w-full h-52 bg-white rounded-xl",
+                        // }}
+                      />
+                    </div>
+                  )} */}
+                  {showESignCanvas && (
+  <div className="border-2 border-dashed rounded-2xl p-6">
+    <SignatureBox ref={sigRef} />
+  </div>
+)}
+
+
+
+
+                  {/* ACTION BUTTONS */}
+                  {showESignCanvas && (
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => sigRef.current.clear()}
+                        className="px-6 py-3 rounded-full border"
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={saveSignature}
+                        className="px-6 py-3 rounded-full bg-black text-white"
+                      >
+                        {activePassengerIndex < formData.passengers.length - 1
+                          ? "Save & Next Passenger"
+                          : "Save & Finish Signing"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* STATUS MESSAGE */}
+                  {!allPassengersSigned && (
+                    <p className="text-sm text-red-500 font-medium">
+                      Please complete e-signatures for all passengers to continue.
+                    </p>
+                  )}
+
+                  {/* REVIEW AGREEMENT */}
+                  <button
+                    onClick={() => setShowAgreement(true)}
+                    disabled={!allPassengersSigned}
+                    className={`px-6 py-3 rounded-full font-semibold ${allPassengersSigned
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-300 cursor-not-allowed"
+                      }`}
+                  >
+                    Review Agreement
                   </button>
                 </div>
+              )}
+
+
+              {/* ================= STEP 7 ================= */}
+              {/* {step === 6 && !isSubmitting && (
+                <div className="space-y-10">
+                  <h2 className="text-3xl font-bold">Upload documents</h2>
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-3xl p-10 cursor-pointer">
+                    <FaFileUpload className="text-4xl text-orange-500" />
+                    <span className="mt-4 text-gray-600">Upload boarding pass or confirmation</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf"
+                      hidden
+                      onChange={(e) => {
+                        setBoardingPasses((prev) => [
+                          ...prev,
+                          ...Array.from(e.target.files),
+                        ]);
+                      }}
+                    />
+
+
+                  </label>
+                  <div className="mt-8 bg-orange-50 border border-orange-200 rounded-2xl p-6">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 w-5 h-5 accent-orange-500"
+                      />
+
+                      <span className="text-sm text-gray-700">
+                        I confirm that all information provided is accurate and I agree to the{" "}
+                        <a
+                          href="/terms-and-conditions"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-orange-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Terms & Conditions
+                        </a>{" "}
+                        and authorize SkyRight to act on my behalf.
+                      </span>
+                    </label>
+                  </div>
+                  {boardingPasses.length > 0 && (
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {boardingPasses.map((file, index) => {
+                        const isImage = file.type.startsWith("image/");
+
+                        return (
+                          <div
+                            key={index}
+                            className="relative border rounded-xl p-2 bg-gray-50"
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBoardingPasses((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                )
+                              }
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs"
+                            >
+                              ✕
+                            </button>
+
+                            {isImage ? (
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt="Boarding pass preview"
+                                className="h-40 w-full object-contain rounded-lg"
+                              />
+                            ) : (
+                              <div className="h-40 flex flex-col items-center justify-center text-sm text-gray-600">
+                                <FaFileUpload className="text-3xl mb-2 text-orange-500" />
+                                <span className="text-center break-all">{file.name}</span>
+                              </div>
+                            )}
+
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                </div>
+              )} */}
+
+              {/* ================= STEP 6 ================= */}
+              {/* ================= STEP 6 ================= */}
+              {step === 6 && !isSubmitting && (
+  <div className="space-y-12">
+    <h2 className="text-3xl font-bold">Upload documents</h2>
+
+    <p className="text-gray-600">
+      Upload required documents for <strong>each passenger</strong>.
+    </p>
+
+    {/* PASSENGERS */}
+    <div className="space-y-12">
+      {formData.passengers.map((passenger, index) => {
+        const passengerName =
+          typeof passenger === "string"
+            ? passenger
+            : passenger.passengerName || passenger.name || "";
+
+        return (
+          <div
+            key={index}
+            className="border rounded-3xl p-8 space-y-8 bg-gray-50"
+          >
+            {/* HEADER */}
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold">
+                {index + 1}
               </div>
+              <h3 className="text-2xl font-bold">{passengerName}</h3>
             </div>
-          )}
 
-          {/* ================= STEP 6 ================= */}
-          {step === 5 && (
-            <div className="space-y-8">
-              <h2 className="text-3xl font-bold">E-Signature</h2>
+            {/* ================= PASSPORT ================= */}
+            <div className="space-y-3">
+              <p className="font-semibold">Passport (Required)</p>
 
-              {/* <input
-                className="w-full px-6 py-4 rounded-full border mb-4"
-                placeholder="Type your full name"
-                onChange={(e) => setFormData({ ...formData, eSignName: e.target.value })}
-              /> */}
+              <label className="flex flex-col items-center justify-center rounded-2xl p-6 border-2 border-dashed cursor-pointer">
+                <FaFileUpload className="text-3xl text-orange-500" />
+                <span className="mt-2 text-sm">Upload passport</span>
 
-              <button
-                onClick={() => setShowAgreement(true)}
-                disabled={!signature}
-                className={`px-6 py-3 rounded-full font-semibold ${signature ? "bg-blue-600 text-white" : "bg-gray-300 cursor-not-allowed"
-                  }`}
-              >
-                Review Agreement
-              </button>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
 
-              <div className="border-2 border-dashed rounded-2xl p-6">
-                <SignatureCanvas
-                  ref={sigRef}
-                  penColor="black"
-                  canvasProps={{ width: 600, height: 200, className: "w-full h-52 bg-white rounded-xl cursor-crosshair" }}
+                    setDocuments((prev) => ({
+                      ...prev,
+                      [`passport-${index}`]: file,
+                    }));
+
+                    setUploadSuccess((prev) => ({
+                      ...prev,
+                      [index]: {
+                        ...prev[index],
+                        passport: true,
+                      },
+                    }));
+
+                    e.target.value = "";
+                  }}
                 />
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => sigRef.current.clear()}
-                  className="px-6 py-3 rounded-full border"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  onClick={saveSignature}
-                  className="px-6 py-3 rounded-full bg-black text-white"
-                >
-                  Save Signature
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ================= STEP 7 ================= */}
-          {step === 6 && (
-            <div className="space-y-10">
-              <h2 className="text-3xl font-bold">Upload documents</h2>
-              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-3xl p-10 cursor-pointer">
-                <FaFileUpload className="text-4xl text-orange-500" />
-                <span className="mt-4 text-gray-600">Upload boarding pass or confirmation</span>
-                <input type="file" hidden />
               </label>
-            </div>
-          )}
 
-          {/* ================= STEP 8 ================= */}
-          {step === 7 && (
-            <div className="text-center space-y-6">
-              <h2 className="text-4xl font-extrabold text-green-600">🎉 Claim submitted</h2>
-              <p className="text-gray-600">
-                Our legal team will review your case and contact you soon.
+              {documents[`passport-${index}`] && (
+                <img
+                  src={URL.createObjectURL(documents[`passport-${index}`])}
+                  alt="Passport"
+                  className="h-24 w-full object-contain border rounded"
+                />
+              )}
+            </div>
+
+            {/* ================= BOARDING PASS ================= */}
+            <div className="space-y-3">
+              <p className="font-semibold">
+                Boarding pass or booking confirmation
               </p>
+
+              <label className="flex flex-col items-center justify-center rounded-2xl p-6 border-2 border-dashed cursor-pointer">
+                <FaFileUpload className="text-3xl text-orange-500" />
+                <span className="mt-2 text-sm">
+                  Upload boarding pass or confirmation
+                </span>
+
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setDocuments((prev) => ({
+                      ...prev,
+                      [`boarding-${index}`]: file,
+                    }));
+
+                    setUploadSuccess((prev) => ({
+                      ...prev,
+                      [index]: {
+                        ...prev[index],
+                        boarding: true,
+                      },
+                    }));
+
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+
+              {documents[`boarding-${index}`] && (
+                <img
+                  src={URL.createObjectURL(documents[`boarding-${index}`])}
+                  alt="Boarding pass"
+                  className="h-24 w-full object-contain border rounded"
+                />
+              )}
             </div>
-          )}
-
-          {/* ACTIONS */}
-          <div className="flex justify-between pt-10">
-            {step > 0 && step < 7 && (
-              <button onClick={back} className="px-6 py-3 rounded-full border">
-                Back
-              </button>
-            )}
-            {step < 7 && (
-              // <button
-              //   onClick={next}
-              //   className="ml-auto px-10 py-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold shadow-lg"
-              // >
-              //   Continue →
-              // </button>
-              <button
-              onClick={next}
-              disabled={
-                (step === 0 && !isStep0Valid()) ||
-                (step === 1 && !isStep1Valid()) ||
-                (step === 2 && !isStep2Valid()) ||
-                (step === 3 && !isStep3Valid()) ||
-                (step === 4 && !isStep4Valid())
-              }
-              className={`ml-auto px-10 py-3 rounded-full font-semibold shadow-lg
-                ${
-                  (step === 0 && !isStep0Valid()) ||
-                  (step === 1 && !isStep1Valid()) ||
-                  (step === 2 && !isStep2Valid()) ||
-                  (step === 3 && !isStep3Valid()) ||
-                  (step === 4 && !isStep4Valid())
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-gradient-to-r from-orange-500 to-red-500 text-white"
-                }
-              `}
-            >
-              Continue →
-            </button>
-            
-
-            )}
           </div>
+        );
+      })}
+    </div>
+
+    {/* TERMS */}
+    <div className="bg-orange-50 border rounded-2xl p-6">
+      <label className="flex gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={acceptTerms}
+          onChange={(e) => setAcceptTerms(e.target.checked)}
+        />
+        <span className="text-sm">
+          I agree to the Terms & Conditions
+        </span>
+      </label>
+    </div>
+  </div>
+)}
+
+
+              {isSubmitting && (
+                <div className="flex flex-col items-center justify-center py-24 space-y-6">
+                  {/* Spinner */}
+                  <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
+
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    Submitting your claim…
+                  </h3>
+
+                  <p className="text-sm text-gray-500 text-center max-w-md">
+                    Please wait while we securely upload your documents and create your case.
+                    Do not close this page.
+                  </p>
+                </div>
+              )}
+
+
+              {/* ================= STEP 8 ================= */}
+              {step === 7 && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-4xl font-extrabold text-green-600">🎉 Claim submitted</h2>
+                  <p className="text-gray-600">
+                    Our legal team will review your case and contact you soon.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* ACTION BAR */}
+            <div className="flex items-center justify-between border-t pt-4">
+              {step > 0 && step < 7 && (
+                <button
+                  onClick={back}
+                  className="px-4 py-2 rounded-lg border text-sm"
+                >
+                  Back
+                </button>
+              )}
+
+
+              {step < 7 && !isSubmitting && (
+                <button
+                  onClick={() => {
+                    if (step === 6) submitClaim();
+                    else next();
+                  }}
+                  disabled={
+                    (step === 0 && !isStep0Valid()) ||
+                    (step === 1 && !isStep1Valid()) ||
+                    (step === 2 && !isStep2Valid()) ||
+                    (step === 3 && !isStep3Valid()) ||
+                    (step === 4 && !isStep4Valid()) ||
+                    (step === 5 && !allPassengersSigned) ||
+
+                    (step === 6 &&
+                      (!acceptTerms ||
+                       Object.keys(documents).length < formData.passengers.length * 2))
+
+                    // (step === 6 && !acceptTerms)
+                    // (step === 6 && (!acceptTerms || Object.keys(documents).length === 0))
+                  }
+                  className="ml-auto px-6 py-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300"
+                >
+                  {step === 6 ? "Submit Claim" : "Continue →"}
+                </button>
+              )}
+
+
+            </div>
+          </main>
         </div>
       </div>
+
+      {/* ANIMATION */}
+      <style>{`
+        .animate-fade {
+          animation: fade 0.25s ease-out;
+        }
+        @keyframes fade {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </section>
   );
 }

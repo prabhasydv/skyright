@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-rou
 import "./App.css";
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
-// import Compansation from "./Pages/Compansation";
+// import Compansation2 from "./Pages/Compansation";
 import Banner from "./Pages/Homepage/Banner";
 import HowItWorks from "./Pages/Homepage/HowitWorks";
 import WhyChooseUs from "./Pages/Homepage/WhyChooseUs";
@@ -13,7 +13,7 @@ import Login from "./Pages/Login/Login";
 import Signup from "./Pages/Signup/Signup";
 import ScrollToTop from "./Components/ScrollTop";
 import CheckCompensation from "./Pages/Compansation";
-import Compensation2 from "./Pages/Compansation2";
+// import Compensation2 from "./Pages/Compansation2";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import MyClaims from "./Pages/Claims/MyClaims";
 import EditClaim from "./Pages/Claims/EditClaim";
@@ -30,6 +30,7 @@ import WhatsAppButton from "./Pages/WhatsAppButton";
 import FlightDelay from "./Pages/Flight-delay";
 import FlightCancellation from "./Pages/FlightCancellation";
 import DeniedBoarding from "./Pages/DeniedBoarding";
+import Compensation2 from "./Pages/Compansation";
 
 const MainLayout = () => {
   return (
@@ -75,6 +76,7 @@ const appRouter = createBrowserRouter([
           <ProtectedRoute>
           <ScrollToTop/>
             {/* <CheckCompensation/> */}
+            {/* <Compensation2/> */}
             <Compensation2/>
             {/* <Compensation3/> */}
           </ProtectedRoute>
